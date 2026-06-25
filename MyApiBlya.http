@@ -1,0 +1,6 @@
+@MyApiBlya_HostAddress = http://localhost:5063
+
+GET {{MyApiBlya_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

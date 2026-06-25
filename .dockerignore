@@ -1,0 +1,12 @@
+bin/
+obj/
+buildcheck/
+buildcheck*
+buildcheck-logout/
+buildcheck-refresh/
+.git/
+.vs/
+.vscode/
+.env
+*.user
+*.suo
