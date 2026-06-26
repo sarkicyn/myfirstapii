@@ -10,7 +10,7 @@ using System.Security.Claims;
 using System.Globalization;
 using System.Net.Http.Headers;
 
-public class UnitTest1
+public class TestAuthLogic
 {
     [Theory]
     [InlineData("", "12345")]
