@@ -32,4 +32,36 @@ Assert.IsType<BadRequestObjectResult>(result);
 refresh.Verify(x=>x.Refresh(request),Times.Once);
  
     }
+    [Fact]
+    public async Task Refresh_ServiceRefresh()
+    {
+        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,hashPass:null!); 
+            var request = new RefreshRequest
+    {
+        Refresh= ""
+    };
+    var result = await service.Refresh(request); 
+   Assert.IsType<ServiceResult<string>>(result);
+        
+    }
+    [Fact]
+    public async Task Refresh_WhenServiceRefresh_ReturnOk()
+    {
+        var request = new RefreshRequest
+    {
+        Refresh= "test-refresh-token"
+    };
+
+       var refresh = new Mock<IAuthService>();
+       refresh.Setup(x=>x.Refresh(request)).ReturnsAsync(ServiceResult<string>.Ok("jwt token"));
+       var action = new Mock<IAddAction>();
+var logger = new Mock<ILogger<AuthController>>();
+var cache = new Mock<IMemoryCache>();
+var users = new Mock<IUserService>();
+var controller = new AuthController(action.Object,logger.Object,users.Object,refresh.Object,null!,cache.Object);
+var result = await controller.Refresh(request);
+var type =Assert.IsType<OkObjectResult>(result);
+var typeV = Assert.IsType<string>(type.Value);
+Assert.Equal("jwt token",typeV);
+    }
 }
