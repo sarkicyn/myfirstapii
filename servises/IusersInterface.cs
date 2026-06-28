@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using MyApiBlya.Services;
-public class CurrentUserProfileDto
+public class    CurrentUserProfileDto
 {
 
     

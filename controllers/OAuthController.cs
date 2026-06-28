@@ -82,7 +82,7 @@ public IActionResult LoginGithub()
 [AllowAnonymous]
 
 [HttpGet("github-callback")]
-[ApiExplorerSettings(IgnoreApi = true)]
+[ApiExplorerSettings(IgnoreApi = true)] 
 public async Task<IActionResult> GithubCallback()
 {
 
