@@ -18,7 +18,13 @@ public class UserService : IUserService
         _action = action;
     }
         
-    
+    private void RemoveUserCache(int id)
+    {
+        _cache.Remove(CacheKeys.UserById(id));
+        _cache.Remove(CacheKeys.UserNotFound(id));
+        _cache.Remove(CacheKeys.CurrentUserById(id));
+        _cache.Remove(CacheKeys.CurrentUserNotFound(id));
+    }
      public async Task<ServiceResult<User>> GetUserByIdAsync(int id)
     { 
         
@@ -177,11 +183,7 @@ RefreshTokenHash = currentUser.Data.RefreshTokenHash
 
         userToRename.Login = name;
         await _action.AddActionAsync(userToRename, "смена имени");
-        _cache.Remove(CacheKeys.UserById(id));
-        _cache.Remove(CacheKeys.UserNotFound(id));
-        _cache.Remove(CacheKeys.CurrentUserById(id));
-        _cache.Remove(CacheKeys.CurrentUserNotFound(id));
-    
+        RemoveUserCache(id);
         
         _logger.LogInformation("Запрос переименования пользователя завершен. Идентификатор текущего пользователя: {CurrentUserId}, идентификатор целевого пользователя: {TargetUserId}", userToRename.Id, id);
 return ServiceResult<string>.Ok($"вы сменили имя на {name}");
