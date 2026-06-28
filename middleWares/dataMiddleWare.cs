@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System.Diagnostics;
 
-public class dataMiddleWare
+public class RequestLoggingMiddleware
 {private readonly RequestDelegate _next;
-    private readonly ILogger<dataMiddleWare> _logger;
+    private readonly ILogger<RequestLoggingMiddleware> _logger;
 
-    public  dataMiddleWare(RequestDelegate next, ILogger<dataMiddleWare> logger)
+    public  RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
     {
     _next = next;
     _logger = logger;
@@ -29,3 +29,4 @@ _logger.LogInformation(
     context.Response.StatusCode);
     }
 }
+

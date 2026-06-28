@@ -1,4 +1,4 @@
-using AspNet.Security.OAuth.GitHub;
+﻿using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
@@ -21,9 +21,9 @@ public class OAuthController : ControllerBase
     private static string BuildAuthCompleteRedirect(LoginResponse response)
     {
         var jwt = Uri.EscapeDataString(response.Jwt);
-        var refresh = Uri.EscapeDataString(response.Refresh);
+        var refreshToken = Uri.EscapeDataString(response.RefreshToken);
 
-        return $"/api/users/auth-complete#jwt={jwt}&refresh={refresh}";
+        return $"/api/users/auth-complete#jwt={jwt}&refresh={refreshToken}";
     }
 
 [AllowAnonymous]
@@ -51,11 +51,11 @@ public async Task<IActionResult> GoogleCallback()
             if (result.Error == "account_blocked")
             {
                 _logger.LogWarning("OAuth Google callback rejected: user account is blocked.");
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: РІР°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ." });
             }
 
             _logger.LogWarning("OAuth Google callback failed. Error: {Error}", result.Error);
-            return BadRequest(new { message = result.Error ?? "Не удалось выполнить аутентификацию." });
+            return BadRequest(new { message = result.Error ?? "РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ." });
         }
 
 
@@ -92,11 +92,11 @@ public async Task<IActionResult> GithubCallback()
             if (result.Error == "account_blocked")
             {
                 _logger.LogWarning("OAuth GitHub callback rejected: user account is blocked.");
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: РІР°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ." });
             }
 
             _logger.LogWarning("OAuth GitHub callback failed. Error: {Error}", result.Error);
-            return BadRequest(new { message = result.Error ?? "Не удалось выполнить аутентификацию." });
+            return BadRequest(new { message = result.Error ?? "РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ." });
         }
  return Redirect(BuildAuthCompleteRedirect(result.Data!));
 }
@@ -217,3 +217,5 @@ public IActionResult AuthComplete()
     return Content(html, "text/html; charset=utf-8");
 }
 }
+
+

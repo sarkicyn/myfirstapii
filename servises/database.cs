@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MyApiBlya.Services;
 
 public class AppDbContext : DbContext
@@ -7,15 +7,15 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<User> users { get; set; }
-    public DbSet<Permissions> permissions { get; set; }
-    public DbSet<usersPerm> usersPermissions { get; set; }
-    public DbSet<History> histories {get;set;}
-    public DbSet<UsersHistory> UsersHistory {get;set;}
+    public DbSet<User> Users { get; set; }
+    public DbSet<Permissions> Permissions { get; set; }
+    public DbSet<UserPermission> UserPermissions { get; set; }
+    public DbSet<UserAction> UserActions {get;set;}
+    public DbSet<UserActionHistory> UserActionHistories {get;set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new Confiq());
+        modelBuilder.ApplyConfiguration(new UserPermissionConfiguration());
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -46,7 +46,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Id).HasColumnName("id");
             entity.Property(x => x.Permission).HasColumnName("permission");
         });
-        modelBuilder.Entity<usersPerm>(entity =>
+        modelBuilder.Entity<UserPermission>(entity =>
 {
     
 
@@ -56,15 +56,15 @@ public class AppDbContext : DbContext
     entity.Property(x => x.perms_id)
         .HasColumnName("perms_id");
 });
-        modelBuilder.ApplyConfiguration(new ConfHistory());
+        modelBuilder.ApplyConfiguration(new UserActionHistoryConfiguration());
 
-        modelBuilder.Entity<History>(entity =>
+        modelBuilder.Entity<UserAction>(entity =>
         {
             entity.HasKey(x=>x.Id);
             entity.Property(x=>x.Id).HasColumnName("Id"); 
             entity.Property(x=>x.Action).HasColumnName("action"); 
         });
-        modelBuilder.Entity<UsersHistory>(entity =>
+        modelBuilder.Entity<UserActionHistory>(entity =>
         {
             entity.HasKey(x=>x.Id);
             entity.Property(x=>x.Id).HasColumnName("id");
@@ -76,3 +76,5 @@ public class AppDbContext : DbContext
 
     }
 }
+
+

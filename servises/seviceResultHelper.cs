@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MyApiBlya.Services;
-public static class Servicehelper
+public static class ServiceResultMapper
 {
-    public static IActionResult ToActionRes<T>(ControllerBase controller,ServiceResult<T> result)
+    public static IActionResult ToActionResult<T>(ControllerBase controller,ServiceResult<T> result)
     {
         if (result.Success)
         {

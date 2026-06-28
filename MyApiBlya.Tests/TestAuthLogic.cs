@@ -22,23 +22,23 @@ public class TestAuthLogic
 
     public async Task Login_WhenResult_NotOk(string? login, string? password)
     {
-        var dto  = new LoginDTO
+        var dto  = new LoginDto
         {
-            login = login,
+            Login = login,
             password = password
         }; 
 var authServiceMock = new Mock<IAuthService>();
-authServiceMock.Setup(x=>x.Login(It.IsAny<LoginDTO>())).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверно введены данные"));
-var action = new Mock<IAddAction>();
+authServiceMock.Setup(x=>x.AuthenticateAsync(It.IsAny<LoginDto>())).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверно введены данные"));
+var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
-users.Setup(x=>x.GetCurrentUserFromDatabaseAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
+users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
 var auth = new Mock<IAuthService>();
 var controller = new AuthController(action.Object,logger.Object,users.Object,authServiceMock.Object,null!,cache.Object);
 var result  = await controller.Login(dto);
 Assert.IsType<BadRequestObjectResult>(result); 
-authServiceMock.Verify(x=>x.Login(dto),Times.Once);
+authServiceMock.Verify(x=>x.AuthenticateAsync(dto),Times.Once);
     }
 
   [Theory]
@@ -51,14 +51,14 @@ authServiceMock.Verify(x=>x.Login(dto),Times.Once);
 public async Task Login_WhenService_BadRequest(string? abdu, string? eblan)
     {
 
-var dto = new LoginDTO
+var dto = new LoginDto
 {
-    login =abdu,
+    Login =abdu,
     password =eblan
 };
 
-        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,hashPass:null!); 
-        var result = await service.Login(dto);
+        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!); 
+        var result = await service.AuthenticateAsync(dto);
         
 Assert.False(result.Success);
 Assert.NotNull(result.Error);
@@ -69,27 +69,27 @@ Assert.Null(result.Data);
     public async Task Login_WhenUserBlocked_ReturnForbid()
     {
         var users = new Mock<IUserService>();
-        users.Setup(x=>x.GetCurrentUserFromDatabaseAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync( ServiceResult<User?>.Ok(new User
+        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync( ServiceResult<User?>.Ok(new User
         { 
             Id = 1,
             IsBlocked = true
         }));
         var auth = new Mock<IAuthService>(); 
-        var action = new Mock<IAddAction>();
+        var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 
 
 
 var controller = new AuthController(action.Object,logger.Object,users.Object,auth.Object,null!,cache.Object);
-var result = await controller.Login(new LoginDTO
+var result = await controller.Login(new LoginDto
 {
-    login = "artem",
+    Login = "artem",
     password = "krasivi"
     
 });
  Assert.IsType<ObjectResult>(result);
-auth.Verify(x=>x.Login(It.IsAny<LoginDTO>()),Times.Never);
+auth.Verify(x=>x.AuthenticateAsync(It.IsAny<LoginDto>()),Times.Never);
     }
     [Fact]
     public async Task Login_WhenResult_Ok()
@@ -97,20 +97,20 @@ auth.Verify(x=>x.Login(It.IsAny<LoginDTO>()),Times.Never);
        var tokens  = new LoginResponse
        {
            Jwt = "jwt",
-           Refresh = "refresh"
+           RefreshToken = "refresh"
        };
        
-       var dto = new LoginDTO
+       var dto = new LoginDto
        {
-           login = "jwt",
+           Login = "jwt",
            password = "refresh"
        }; 
         var users = new Mock<IUserService>();
         var auth  = new Mock<IAuthService>();
-        users.Setup(x=>x.GetCurrentUserFromDatabaseAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
-        auth.Setup(x=>x.Login(dto)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(tokens));
+        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
+        auth.Setup(x=>x.AuthenticateAsync(dto)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(tokens));
           
-        var action = new Mock<IAddAction>();
+        var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 
@@ -121,9 +121,13 @@ var result = await controller.Login(dto);
 var type=Assert.IsType<OkObjectResult>(result);
 var typeV=Assert.IsType<LoginResponse>(type.Value);
 Assert.Equal("jwt",typeV.Jwt);
-Assert.Equal("refresh",typeV.Refresh);
+Assert.Equal("refresh",typeV.RefreshToken);
 
 
 
     }
 }
+
+
+
+

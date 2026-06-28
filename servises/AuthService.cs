@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
 using System.Security.Cryptography;
@@ -10,13 +10,13 @@ public class AuthService : IAuthService
     private readonly AppDbContext _context;
  private readonly IMemoryCache _cache;
     private readonly ILogger<AuthService> _logger;
-    private readonly IAddAction _action;
-    private readonly IJwtCreate _jwt;
-private readonly IRefreshing _fresh; 
+    private readonly IUserActionService _action;
+    private readonly IJwtTokenService _jwt;
+private readonly IRefreshTokenService _fresh; 
 private readonly IConfiguration _conf;
-private readonly HashPassword _hashpass;
+private readonly IPasswordHashService _hashpass;
 
-    public AuthService(AppDbContext context,IMemoryCache cache,ILogger<AuthService> logger,IAddAction action,IJwtCreate jwt,IRefreshing fresh,IConfiguration conf,HashPassword hashPass)
+    public AuthService(AppDbContext context,IMemoryCache cache,ILogger<AuthService> logger,IUserActionService action,IJwtTokenService jwt,IRefreshTokenService fresh,IConfiguration conf,IPasswordHashService HashPassword)
     {
         _context  = context;
         _cache = cache;
@@ -25,7 +25,7 @@ private readonly HashPassword _hashpass;
         _jwt =jwt;
         _fresh  =fresh; 
         _conf =conf;
-        _hashpass = hashPass; 
+        _hashpass = HashPassword; 
     }
 
     private void RemoveUserCache(int id)
@@ -36,95 +36,95 @@ private readonly HashPassword _hashpass;
         _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
 
-     public async Task<ServiceResult<LoginResponse>>Login(LoginDTO dTO){
+     public async Task<ServiceResult<LoginResponse>>AuthenticateAsync(LoginDto dTO){
     if (dTO is null)
             {
-     return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.");
+     return ServiceResult<LoginResponse>.Fail("Р”Р°РЅРЅС‹Рµ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚.");
             }
 
-            if (string.IsNullOrWhiteSpace(dTO.login) || string.IsNullOrWhiteSpace(dTO.password))
+            if (string.IsNullOrWhiteSpace(dTO.Login) || string.IsNullOrWhiteSpace(dTO.password))
             {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ.");
                    
             }
-            if (dTO.login.Length <= 3 || dTO.password.Length <= 3)
+            if (dTO.Login.Length <= 3 || dTO.password.Length <= 3)
         {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ.");
             
         }
-bool regg = Regex.IsMatch(dTO.login!, @"[^a-zA-Z0-9]");
+bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
         if (regg)
         {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ.");
             
         }
 
-            if (await _context.users.AnyAsync(user => user.Login == dTO.login))
+            if (await _context.Users.AnyAsync(user => user.Login == dTO.Login))
             {
-     return ServiceResult<LoginResponse>.Fail("Логин уже занят.");
+     return ServiceResult<LoginResponse>.Fail("Р›РѕРіРёРЅ СѓР¶Рµ Р·Р°РЅСЏС‚.");
             
             }
 var (refreshToken, hash) = _fresh.GenerateRefreshToken();
-_logger.LogInformation("Сгенерирован refresh token для входа пользователя."); 
-var us = await _context.users.FirstOrDefaultAsync(x=>x.Login==dTO.login&&x.Password==dTO.password); 
+_logger.LogInformation("РЎРіРµРЅРµСЂРёСЂРѕРІР°РЅ refresh token РґР»СЏ РІС…РѕРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ."); 
+var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login&&x.Password==dTO.password); 
 if(us==null){ 
-    var hashPass =  _hashpass.HashPass(dTO); 
+    var HashPassword =  _hashpass.HashPassword(dTO); 
          us = new User()
         {  
-            Login = dTO.login,
-            Password = hashPass,
+            Login = dTO.Login,
+            Password = HashPassword,
             Role = "User",
             CreatedAt = DateTime.UtcNow
         };}
 await _fresh.SaveRefreshTokenAsync(us,hash);
-        await _context.users.AddAsync(us);
+        await _context.Users.AddAsync(us);
         await _context.SaveChangesAsync();
 
-      var jwt = await _jwt.GenerateToken(us);
+      var jwt = await _jwt.GenerateUserTokenAsync(us);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
-        await _action.AddActions(us, "вход пользователя");
+        await _action.AddActionAsync(us, "РІС…РѕРґ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ");
        
         return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
     Jwt = jwt,
-    Refresh = refreshToken
+    RefreshToken = refreshToken
 }); 
  }
 
-   public async Task<ServiceResult<string>> Refresh( RefreshRequest request){
- var refToken =  request.Refresh;
+   public async Task<ServiceResult<string>> RefreshJwtAsync(RefreshRequest request){
+ var refToken =  request.RefreshToken;
 
        if (string.IsNullOrWhiteSpace(refToken))
 {
-     return ServiceResult<string>.Fail("Токен отсутствует.");
+     return ServiceResult<string>.Fail("РўРѕРєРµРЅ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚.");
     
 }
 
        var token = Convert.ToBase64String(
             SHA256.HashData(
                 Encoding.UTF8.GetBytes(refToken)));
-        var userTrue = await _context.users.FirstOrDefaultAsync(x =>
+        var userTrue = await _context.Users.FirstOrDefaultAsync(x =>
             x.RefreshTokenHash == token ||
             x.RefreshTokenHash == refToken);
        if (userTrue is null)
 {
-     return ServiceResult<string>.Fail("Пользователь не найден.");
+     return ServiceResult<string>.Fail("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ.");
    
 }
 
 if (userTrue.RefreshTokenExpiresAt <= DateTime.UtcNow)
 {
-     return ServiceResult<string>.Fail("Срок действия токена истек. Выполните вход заново.");
+     return ServiceResult<string>.Fail("РЎСЂРѕРє РґРµР№СЃС‚РІРёСЏ С‚РѕРєРµРЅР° РёСЃС‚РµРє. Р’С‹РїРѕР»РЅРёС‚Рµ РІС…РѕРґ Р·Р°РЅРѕРІРѕ.");
     
     
 }
-var jwt  = await _jwt.GenerateToken1(userTrue);
-await _action.AddActions(userTrue, "обновление jwt токена");
+var jwt  = await _jwt.GenerateAdminTokenAsync(userTrue);
+await _action.AddActionAsync(userTrue, "РѕР±РЅРѕРІР»РµРЅРёРµ jwt С‚РѕРєРµРЅР°");
 return ServiceResult<string>.Ok(jwt);
    }
 
-    public async Task<ServiceResult<LoginResponse>> AdminAuth(LoginDTO dto)
+    public async Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto)
     {
         if (dto is null)
         {
@@ -133,33 +133,36 @@ return ServiceResult<string>.Ok(jwt);
 
           var adminLogin = _conf["ADMIN_LOGIN"];
 var adminPassword = _conf["ADMIN_PASSWORD"];
-        if (dto.login == adminLogin && dto.password == adminPassword)
+        if (dto.Login == adminLogin && dto.password == adminPassword)
         {
             
         
-          var user = await _context.users.FirstOrDefaultAsync(x=>x.Login ==dto.login&&x.Password==dto.password);
+          var user = await _context.Users.FirstOrDefaultAsync(x=>x.Login == dto.Login && x.Password == dto.password);
         if (user == null)
         {
 
             user = new User()
             {
-                Login = dto.login,
+                Login = dto.Login,
                 Password = dto.password,
                 Role = "Admin",
                 IsBlocked = false,
                 CreatedAt = DateTime.UtcNow
                 
             };
-            await _context.users.AddAsync(user); 
+            await _context.Users.AddAsync(user); 
     }
              var(refreshToken,hash) =  _fresh.GenerateRefreshToken();
              await _fresh.SaveRefreshTokenAsync(user,hash); 
               await _context.SaveChangesAsync();
-              var jwt = await _jwt.GenerateToken1(user);
-              await _action.AddActions(user, "вход администратора");
+              var jwt = await _jwt.GenerateAdminTokenAsync(user);
+              await _action.AddActionAsync(user, "РІС…РѕРґ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°");
               RemoveUserCache(user.Id);
-    return ServiceResult<LoginResponse>.Ok(new LoginResponse{Refresh=refreshToken,Jwt = jwt});
+    return ServiceResult<LoginResponse>.Ok(new LoginResponse{RefreshToken =refreshToken,Jwt = jwt});
         }
-    return ServiceResult<LoginResponse>.Fail("Неверные данные.");
+    return ServiceResult<LoginResponse>.Fail("РќРµРІРµСЂРЅС‹Рµ РґР°РЅРЅС‹Рµ.");
     }
 }
+
+
+

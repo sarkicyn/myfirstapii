@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -10,11 +10,11 @@ public class AdminUsersController : ControllerBase
 {
     private readonly IUserService _users;
     private readonly ILogger<AdminUsersController> _logger;
-    private readonly IAddAction _action;
+    private readonly IUserActionService _action;
     private readonly AppDbContext _context;
     private readonly IMemoryCache _cache;
 
-    public AdminUsersController(IAddAction action,ILogger<AdminUsersController> logger,
+    public AdminUsersController(IUserActionService action,ILogger<AdminUsersController> logger,
     IUserService users, AppDbContext context,IMemoryCache cache
     )
     {
@@ -36,47 +36,47 @@ public class AdminUsersController : ControllerBase
 
 [Authorize(Roles = "Admin")]
     [HttpGet("{id:int:min(1):max(100)}")]
-    public async Task<IActionResult> getUserById(int id)
+    public async Task<IActionResult> GetUserById(int id)
     {
-        _logger.LogInformation("Запрос данных пользователя начат. Идентификатор запрошенного пользователя: {RequestedUserId}", id);
+        _logger.LogInformation("Р—Р°РїСЂРѕСЃ РґР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅР°С‡Р°С‚. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р·Р°РїСЂРѕС€РµРЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {RequestedUserId}", id);
 
-        var currentUser = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var currentUser = await _users.GetCurrentUserAsync(User);
         if (!currentUser.Success || currentUser.Data is null)
         {
-            _logger.LogWarning("Неавторизованный запрос данных пользователя. Идентификатор запрошенного пользователя: {RequestedUserId}", id);
-            return Unauthorized(new { message = "Требуется авторизация." });
+            _logger.LogWarning("РќРµР°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ Р·Р°РїСЂРѕСЃ РґР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р·Р°РїСЂРѕС€РµРЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {RequestedUserId}", id);
+            return Unauthorized(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ." });
         }
 
         if (currentUser.Data!.IsBlocked)
         {
-            _logger.LogWarning("Действие запрещено: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            _logger.LogWarning("Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}", currentUser.Data.Id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ." });
         }
         var cacheKey = CacheKeys.UserById(id);
         var notFoundCacheKey = CacheKeys.UserNotFound(id);
 
         if (_cache.TryGetValue(notFoundCacheKey, out bool _))
         {
-            _logger.LogWarning("Запрошенный пользователь не найден. Идентификатор запрошенного пользователя: {RequestedUserId}", id);
-            return NotFound(new { message = "Запрошенный пользователь не найден." });
+            _logger.LogWarning("Р—Р°РїСЂРѕС€РµРЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р·Р°РїСЂРѕС€РµРЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {RequestedUserId}", id);
+            return NotFound(new { message = "Р—Р°РїСЂРѕС€РµРЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ." });
         }
 
         if (!_cache.TryGetValue(cacheKey, out User? user))
         {
-            var ser = await _users.GetOneUser(id);
+            var ser = await _users.GetUserByIdAsync(id);
 
             if (ser == null || !ser.Success)
             {
                 _cache.Set(notFoundCacheKey, true, TimeSpan.FromSeconds(15));
-                _logger.LogWarning("Запрошенный пользователь не найден. Идентификатор запрошенного пользователя: {RequestedUserId}", id);
-                return NotFound(new { message = "Запрошенный пользователь не найден." });
+                _logger.LogWarning("Р—Р°РїСЂРѕС€РµРЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р·Р°РїСЂРѕС€РµРЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {RequestedUserId}", id);
+                return NotFound(new { message = "Р—Р°РїСЂРѕС€РµРЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ." });
             }
 
             user = ser.Data;
             _cache.Set(cacheKey,user,TimeSpan.FromMinutes(3));
         }
 
-            await _action.AddActions(currentUser.Data, $"получение  пользователя {user!.Login} по id");
+            await _action.AddActionAsync(currentUser.Data, $"РїРѕР»СѓС‡РµРЅРёРµ  РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ {user!.Login} РїРѕ id");
             await _context.SaveChangesAsync();
             return Ok(user);
     }
@@ -85,27 +85,27 @@ public class AdminUsersController : ControllerBase
     [HttpGet("all")]
     public async Task<IActionResult> GetUsers()
     {
-        _logger.LogInformation("Запрос списка пользователей начат.");
+        _logger.LogInformation("Р—Р°РїСЂРѕСЃ СЃРїРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РЅР°С‡Р°С‚.");
 
-        var currentUser = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var currentUser = await _users.GetCurrentUserAsync(User);
         if (!currentUser.Success)
         {
-            _logger.LogWarning("Неавторизованный запрос списка пользователей.");
-            return Unauthorized(new { message = "Требуется авторизация." });
+            _logger.LogWarning("РќРµР°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ Р·Р°РїСЂРѕСЃ СЃРїРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.");
+            return Unauthorized(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ." });
         }
         if (currentUser.Data!.IsBlocked)
         {
-            _logger.LogWarning("Действие запрещено: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            _logger.LogWarning("Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}", currentUser.Data.Id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ." });
         }
 
-        var users =  await _users.GetAllUsers();
+        var users =  await _users.GetAllUsersAsync();
 
-        await _action.AddActions(currentUser.Data!, "получить всех пользователей");
+        await _action.AddActionAsync(currentUser.Data!, "РїРѕР»СѓС‡РёС‚СЊ РІСЃРµС… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№");
             await _context.SaveChangesAsync();
 
 
-        _logger.LogInformation("Запрос списка пользователей завершен. Идентификатор текущего пользователя: {CurrentUserId}, количество пользователей: {UsersCount}", currentUser.Data!.Id, users?.Data?.Count ?? 0);
+        _logger.LogInformation("Р—Р°РїСЂРѕСЃ СЃРїРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ Р·Р°РІРµСЂС€РµРЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}, РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№: {UsersCount}", currentUser.Data!.Id, users?.Data?.Count ?? 0);
         return Ok(users);
     }
 
@@ -113,29 +113,29 @@ public class AdminUsersController : ControllerBase
 [HttpDelete("deleteUser")]
 public async Task<IActionResult> DeleteUser(int Id)
     {
-        var currentUser = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var currentUser = await _users.GetCurrentUserAsync(User);
         if (!currentUser.Success || currentUser.Data is null)
-        {
-            return Unauthorized(new { message = "Требуется авторизация." });
+        {   
+            return Unauthorized(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ." });
         }
 
         if (currentUser.Data.IsBlocked)
         {
-            _logger.LogWarning("Удаление пользователя запрещено: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}, целевой пользователь: {TargetUserId}", currentUser.Data.Id, Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            _logger.LogWarning("РЈРґР°Р»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Р·Р°РїСЂРµС‰РµРЅРѕ: С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}, С†РµР»РµРІРѕР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ: {TargetUserId}", currentUser.Data.Id, Id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ." });
         }
 
-        var user = await _context.users.FirstOrDefaultAsync(x=>x.Id==Id);
+        var user = await _context.Users.FirstOrDefaultAsync(x=>x.Id==Id);
         if (user != null)
         {
-            await _action.AddActions(currentUser.Data, $"удаление пользователя {user.Login} ");
-            _context.users.Remove(user);
+            await _action.AddActionAsync(currentUser.Data, $"СѓРґР°Р»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ {user.Login} ");
+            _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             RemoveUserCache(Id);
-            _logger.LogInformation("Пользователь удален. Идентификатор администратора: {AdminUserId}, идентификатор удаленного пользователя: {TargetUserId}", currentUser.Data.Id, Id);
-            return Ok(new {message = $"пользователь {user.Login} удален"});
+            _logger.LogInformation("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓРґР°Р»РµРЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°: {AdminUserId}, РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ СѓРґР°Р»РµРЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {TargetUserId}", currentUser.Data.Id, Id);
+            return Ok(new {message = $"РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ {user.Login} СѓРґР°Р»РµРЅ"});
         }
-            return NotFound(new {message = $"Пользователь не найден."});
+            return NotFound(new {message = $"РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ."});
 
     }
 
@@ -143,59 +143,61 @@ public async Task<IActionResult> DeleteUser(int Id)
     [HttpPut("blockUser")]
     public async Task<IActionResult>BlockUser(int id)
     {
-        var currentUser = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var currentUser = await _users.GetCurrentUserAsync(User);
         if (!currentUser.Success || currentUser.Data is null)
         {
-            return Unauthorized(new { message = "Требуется авторизация." });
+            return Unauthorized(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ." });
         }
 
         if (currentUser.Data.IsBlocked)
         {
-            _logger.LogWarning("Блокировка пользователя запрещена: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}, целевой пользователь: {TargetUserId}", currentUser.Data.Id, id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            _logger.LogWarning("Р‘Р»РѕРєРёСЂРѕРІРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Р·Р°РїСЂРµС‰РµРЅР°: С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}, С†РµР»РµРІРѕР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ: {TargetUserId}", currentUser.Data.Id, id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ." });
         }
 
-         var user = await _context.users.FirstOrDefaultAsync(x=>x.Id==id);
+         var user = await _context.Users.FirstOrDefaultAsync(x=>x.Id==id);
 
         if (user != null)
         {
             user.IsBlocked = true;
-            await _action.AddActions(currentUser.Data, $"блокировка пользователя {user.Login}");
+            await _action.AddActionAsync(currentUser.Data, $"Р±Р»РѕРєРёСЂРѕРІРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ {user.Login}");
             await _context.SaveChangesAsync();
             RemoveUserCache(id);
-            _logger.LogInformation("Пользователь заблокирован. Идентификатор администратора: {AdminUserId}, идентификатор пользователя: {TargetUserId}", currentUser.Data.Id, id);
+            _logger.LogInformation("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°: {AdminUserId}, РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {TargetUserId}", currentUser.Data.Id, id);
 
-            return Ok(new{message = $"пользователь {user.Login} заблокирован"});
+            return Ok(new{message = $"РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ {user.Login} Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ"});
         }
-        return NotFound(new{message ="Пользователь не найден."});
+        return NotFound(new{message ="РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ."});
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPut("UnblockUser")]
-    public async Task<IActionResult>UnBlockUser(int id)
+    public async Task<IActionResult>UnblockUser(int id)
     {
-        var currentUser = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var currentUser = await _users.GetCurrentUserAsync(User);
         if (!currentUser.Success || currentUser.Data is null)
         {
-            return Unauthorized(new { message = "Требуется авторизация." });
+            return Unauthorized(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ." });
         }
 
         if (currentUser.Data.IsBlocked)
         {
-            _logger.LogWarning("Разблокировка пользователя запрещена: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}, целевой пользователь: {TargetUserId}", currentUser.Data.Id, id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            _logger.LogWarning("Р Р°Р·Р±Р»РѕРєРёСЂРѕРІРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Р·Р°РїСЂРµС‰РµРЅР°: С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}, С†РµР»РµРІРѕР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ: {TargetUserId}", currentUser.Data.Id, id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ." });
         }
 
-         var user = await _context.users.FirstOrDefaultAsync(x=>x.Id==id);
+         var user = await _context.Users.FirstOrDefaultAsync(x=>x.Id==id);
         if (user != null)
         {
             user.IsBlocked = false;
-            await _action.AddActions(currentUser.Data, $"разблокировка пользователя {user.Login}");
+            await _action.AddActionAsync(currentUser.Data, $"СЂР°Р·Р±Р»РѕРєРёСЂРѕРІРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ {user.Login}");
             await _context.SaveChangesAsync();
             RemoveUserCache(id);
-            _logger.LogInformation("Пользователь разблокирован. Идентификатор администратора: {AdminUserId}, идентификатор пользователя: {TargetUserId}", currentUser.Data.Id, id);
-            return Ok(new{message = $"пользователь {user.Login} разблокирован"});
+            _logger.LogInformation("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЂР°Р·Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°: {AdminUserId}, РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {TargetUserId}", currentUser.Data.Id, id);
+            return Ok(new{message = $"РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ {user.Login} СЂР°Р·Р±Р»РѕРєРёСЂРѕРІР°РЅ"});
         }
-        return NotFound(new{message ="Пользователь не найден."});
+        return NotFound(new{message ="РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ."});
     }
 }
+
+

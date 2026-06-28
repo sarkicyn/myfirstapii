@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MyApiBlya.Services;
 
-public class Confiq : IEntityTypeConfiguration<usersPerm>
+public class UserPermissionConfiguration : IEntityTypeConfiguration<UserPermission>
 {
-    public void Configure(EntityTypeBuilder<usersPerm> builder)
+    public void Configure(EntityTypeBuilder<UserPermission> builder)
     {
         builder.ToTable("users_permissions");
 
@@ -26,3 +26,4 @@ public class Confiq : IEntityTypeConfiguration<usersPerm>
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
+

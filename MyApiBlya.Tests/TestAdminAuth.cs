@@ -1,4 +1,4 @@
-namespace MyApiBlya.Tests;
+﻿namespace MyApiBlya.Tests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -11,35 +11,35 @@ public class TestAdminAuth
     [Fact]
     public async Task AdminAuth_WhenResult_NotOk()
     {
-        var dto = new LoginDTO
+        var dto = new LoginDto
         {
-            login = "wrong-admin",
+            Login = "wrong-admin",
             password = "wrong-password"
         };
 
         var auth = new Mock<IAuthService>();
-        auth.Setup(x => x.AdminAuth(dto))
-            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверные данные"));
+        auth.Setup(x => x.AuthenticateAdminAsync(dto))
+            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("РЅРµРІРµСЂРЅС‹Рµ РґР°РЅРЅС‹Рµ"));
 
-        var action = new Mock<IAddAction>();
+        var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AuthController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
         var controller = new AuthController(action.Object, logger.Object, users.Object, auth.Object, null!, cache.Object);
 
-        var result = await controller.AdminAuth(dto);
+        var result = await controller.AuthenticateAdminAsync(dto);
 
         Assert.IsType<BadRequestObjectResult>(result);
-        auth.Verify(x => x.AdminAuth(dto), Times.Once);
+        auth.Verify(x => x.AuthenticateAdminAsync(dto), Times.Once);
     }
 
     [Fact]
     public async Task AdminAuth_Service_WhenInvalidData_ReturnsFail()
     {
-        var dto = new LoginDTO
+        var dto = new LoginDto
         {
-            login = "wrong-admin",
+            Login = "wrong-admin",
             password = "wrong-password"
         };
 
@@ -55,13 +55,15 @@ public class TestAdminAuth
             jwt: null!,
             fresh: null!,
             conf: conf.Object,
-            hashPass: null!
+            HashPassword: null!
         );
 
-        var result = await service.AdminAuth(dto);
+        var result = await service.AuthenticateAdminAsync(dto);
 
         Assert.False(result.Success);
         Assert.NotNull(result.Error);
         Assert.Null(result.Data);
     }
 }
+
+

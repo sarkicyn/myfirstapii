@@ -1,18 +1,18 @@
-    using System.Security.Claims;
+﻿    using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System;
 using MyApiBlya.Services;
-public class Google : IGoogl {
+public class GoogleUserService : IGoogleUserService {
     private readonly AppDbContext _context; 
-    private readonly ILogger<Google> _logger;
+    private readonly ILogger<GoogleUserService> _logger;
 
-public Google(AppDbContext context, ILogger<Google> logger)
+public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger)
     {
         _context = context;
         _logger = logger;
     }
 
-    public async Task<User> GoogleLogin(ClaimsPrincipal userClaims)
+    public async Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims)
 {
     var providerId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var email = userClaims.FindFirst(ClaimTypes.Email)?.Value;
@@ -21,10 +21,10 @@ public Google(AppDbContext context, ILogger<Google> logger)
     if (string.IsNullOrWhiteSpace(providerId))
     {
         _logger.LogWarning("Google authentication failed: provider user id is missing.");
-        throw new Exception("Идентификатор пользователя Google не найден.");
+        throw new Exception("РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Google РЅРµ РЅР°Р№РґРµРЅ.");
     }
 
-    var user = await _context.users
+    var user = await _context.Users
         .FirstOrDefaultAsync(x =>
             x.Provider == "Google" &&
             x.ProviderUserId == providerId);
@@ -47,10 +47,12 @@ public Google(AppDbContext context, ILogger<Google> logger)
                 
             
 
-      await _context.users.AddAsync(user);
+      await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Создан пользователь через Google. Идентификатор пользователя: {UserId}", user.Id);
+        _logger.LogInformation("РЎРѕР·РґР°РЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С‡РµСЂРµР· Google. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {UserId}", user.Id);
     }
 
     return user;
 }}
+
+

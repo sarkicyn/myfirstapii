@@ -1,15 +1,15 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using MyApiBlya.Services;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-public class Refresh : IRefreshing
+public class RefreshTokenService : IRefreshTokenService
 {
     private readonly AppDbContext _context;
-private readonly IJwtCreate _jwt; 
-    public Refresh(AppDbContext context,IJwtCreate jwt)
+private readonly IJwtTokenService _jwt; 
+    public RefreshTokenService(AppDbContext context,IJwtTokenService jwt)
     {
         _context = context;
         _jwt = jwt;
@@ -37,3 +37,4 @@ private readonly IJwtCreate _jwt;
     }
    
 }
+

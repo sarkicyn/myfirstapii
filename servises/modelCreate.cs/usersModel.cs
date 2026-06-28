@@ -1,4 +1,4 @@
-namespace MyApiBlya.Services;
+﻿namespace MyApiBlya.Services;
 
 public class User
 {
@@ -23,7 +23,9 @@ public class User
         "user.Auth"
     };
 
-    public List<usersPerm> perms { get; set; } = new();
-    public List<UsersHistory> histories{get;set;} = new(); 
+    public List<UserPermission> perms { get; set; } = new();
+    public List<UserActionHistory> histories{get;set;} = new(); 
 
 }
+
+

@@ -1,19 +1,19 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MyApiBlya.Services;
 
-public class GithubService : IGitHubing
+public class GitHubUserService : IGitHubUserService
 {
     private readonly AppDbContext _context;
-    private readonly ILogger<GithubService> _logger;
+    private readonly ILogger<GitHubUserService> _logger;
 
-    public GithubService(AppDbContext context, ILogger<GithubService> logger)
+    public GitHubUserService(AppDbContext context, ILogger<GitHubUserService> logger)
     {
         _context = context;
         _logger = logger;
     }
 
-    public async Task<User> GithubLogin(ClaimsPrincipal claims)
+    public async Task<User> FindOrCreateGitHubUserAsync(ClaimsPrincipal claims)
     {
         var githubId = claims
             .FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -27,10 +27,10 @@ public class GithubService : IGitHubing
         if (string.IsNullOrWhiteSpace(githubId))
         {
             _logger.LogWarning("GitHub authentication failed: provider user id is missing.");
-            throw new Exception("Идентификатор пользователя GitHub не найден.");
+            throw new Exception("РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ GitHub РЅРµ РЅР°Р№РґРµРЅ.");
         }
 
-        var user = await _context.users
+        var user = await _context.Users
             .FirstOrDefaultAsync(x =>
                 x.Provider == "GitHub" &&
                 x.ProviderUserId == githubId);
@@ -52,10 +52,12 @@ public class GithubService : IGitHubing
             RefreshTokenExpiresAt = DateTime.UtcNow
         };
 
-        await _context.users.AddAsync(user);
+        await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Создан пользователь через GitHub. Идентификатор пользователя: {UserId}", user.Id);
+        _logger.LogInformation("РЎРѕР·РґР°РЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С‡РµСЂРµР· GitHub. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {UserId}", user.Id);
 
         return user;
     }
 }
+
+

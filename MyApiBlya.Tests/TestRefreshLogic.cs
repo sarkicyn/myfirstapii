@@ -1,4 +1,4 @@
-namespace MyApiBlya.Tests;
+﻿namespace MyApiBlya.Tests;
 using MyApiBlya.Tests;
 using Moq;
 using Microsoft.Extensions.Caching.Memory;
@@ -18,29 +18,29 @@ public class TestRefreshLogic()
     {
     var request = new RefreshRequest
     {
-        Refresh= "test-refresh-token"
+        RefreshToken = "test-refresh-token"
     };
-       var refresh = new Mock<IAuthService>();
-       refresh.Setup(x=>x.Refresh(request)).ReturnsAsync(ServiceResult<string>.Fail("неверные данные"));
-       var action = new Mock<IAddAction>();
+       var refreshAuthService = new Mock<IAuthService>();
+       refreshAuthService.Setup(x=>x.RefreshJwtAsync(request)).ReturnsAsync(ServiceResult<string>.Fail("РЅРµРІРµСЂРЅС‹Рµ РґР°РЅРЅС‹Рµ"));
+       var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
-var controller = new AuthController(action.Object,logger.Object,users.Object,refresh.Object,null!,cache.Object);
+var controller = new AuthController(action.Object,logger.Object,users.Object,refreshAuthService.Object,null!,cache.Object);
 var result = await controller.Refresh(request);
 Assert.IsType<BadRequestObjectResult>(result);
-refresh.Verify(x=>x.Refresh(request),Times.Once);
+refreshAuthService.Verify(x=>x.RefreshJwtAsync(request),Times.Once);
  
     }
     [Fact]
     public async Task Refresh_ServiceRefresh()
     {
-        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,hashPass:null!); 
+        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!); 
             var request = new RefreshRequest
     {
-        Refresh= ""
+        RefreshToken = ""
     };
-    var result = await service.Refresh(request); 
+    var result = await service.RefreshJwtAsync(request); 
    Assert.IsType<ServiceResult<string>>(result);
         
     }
@@ -49,19 +49,21 @@ refresh.Verify(x=>x.Refresh(request),Times.Once);
     {
         var request = new RefreshRequest
     {
-        Refresh= "test-refresh-token"
+        RefreshToken = "test-refresh-token"
     };
 
-       var refresh = new Mock<IAuthService>();
-       refresh.Setup(x=>x.Refresh(request)).ReturnsAsync(ServiceResult<string>.Ok("jwt token"));
-       var action = new Mock<IAddAction>();
+       var refreshAuthService = new Mock<IAuthService>();
+       refreshAuthService.Setup(x=>x.RefreshJwtAsync(request)).ReturnsAsync(ServiceResult<string>.Ok("jwt token"));
+       var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
-var controller = new AuthController(action.Object,logger.Object,users.Object,refresh.Object,null!,cache.Object);
+var controller = new AuthController(action.Object,logger.Object,users.Object,refreshAuthService.Object,null!,cache.Object);
 var result = await controller.Refresh(request);
 var type =Assert.IsType<OkObjectResult>(result);
 var typeV = Assert.IsType<string>(type.Value);
 Assert.Equal("jwt token",typeV);
     }
 }
+
+

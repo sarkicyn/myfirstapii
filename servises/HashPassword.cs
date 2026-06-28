@@ -1,8 +1,8 @@
 ﻿using BCrypt.Net;
 using MyApiBlya.Services;
-public class HashPassik:HashPassword
+public class BCryptPasswordHashService:IPasswordHashService
 {
-    public string HashPass(LoginDTO dto)
+    public string HashPassword(LoginDto dto)
     {
         if(dto!=null){
        return BCrypt.Net.BCrypt.HashPassword(dto.password);}
@@ -11,4 +11,6 @@ public class HashPassik:HashPassword
     }
         
 }
+
+
 

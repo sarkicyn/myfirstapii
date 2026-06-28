@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,11 +11,11 @@ public class AuthController : ControllerBase
     private readonly IUserService _users;
     private readonly IAuthService _auth;
     private readonly ILogger<AuthController> _logger;
-    private readonly IAddAction _action;
+    private readonly IUserActionService _action;
     private readonly AppDbContext _context;
     private readonly IMemoryCache _cache;
 
-    public AuthController(IAddAction action,ILogger<AuthController> logger,
+    public AuthController(IUserActionService action,ILogger<AuthController> logger,
     IUserService users, IAuthService auth, AppDbContext context,IMemoryCache cache
     )
     {
@@ -41,19 +41,19 @@ public class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
-        public async Task<IActionResult>Login(LoginDTO dTO)
+        public async Task<IActionResult> Login(LoginDto dTO)
         {
-        var current = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var current = await _users.GetCurrentUserAsync(User);
         if (current.Success && current.Data is not null && current.Data.IsBlocked)
         {
-            _logger.LogWarning("Вход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", current.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+            _logger.LogWarning("Р’С…РѕРґ Р·Р°РїСЂРµС‰РµРЅ: РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}", current.Data.Id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: РІР°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ." });
         }
 
-        var result = await _auth.Login(dTO);
+        var result = await _auth.AuthenticateAsync(dTO);
 if (!result.Success)
         {
-          return  Servicehelper.ToActionRes(this,result);
+          return  ServiceResultMapper.ToActionResult(this,result);
         }
 
         return Ok(result.Data);
@@ -65,10 +65,10 @@ if (!result.Success)
     {
 
 
-       var result = await _auth.Refresh(request);
+       var result = await _auth.RefreshJwtAsync(request);
         if (!result.Success)
         {
-            return Servicehelper.ToActionRes(this,result);
+            return ServiceResultMapper.ToActionResult(this,result);
         }
 return Ok(result.Data);
 
@@ -80,24 +80,24 @@ return Ok(result.Data);
     public async Task<IActionResult> Logout()
     {
 
-        _logger.LogInformation("Запрос выхода из аккаунта начат.");
+        _logger.LogInformation("Р—Р°РїСЂРѕСЃ РІС‹С…РѕРґР° РёР· Р°РєРєР°СѓРЅС‚Р° РЅР°С‡Р°С‚.");
 
-        var currentUser = await _users.GetCurrentUserFromDatabaseAsync(User);
+        var currentUser = await _users.GetCurrentUserAsync(User);
         if (!currentUser.Success)
         {
-            _logger.LogWarning("Выход не выполнен: текущий пользователь не найден.");
-            return Unauthorized(new { message = "Требуется авторизация." });
+            _logger.LogWarning("Р’С‹С…РѕРґ РЅРµ РІС‹РїРѕР»РЅРµРЅ: С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ.");
+            return Unauthorized(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ." });
         }
         if (currentUser.Data is not null && currentUser.Data.IsBlocked)
         {
-            _logger.LogWarning("Выход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            _logger.LogWarning("Р’С‹С…РѕРґ Р·Р°РїСЂРµС‰РµРЅ: РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}", currentUser.Data.Id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ." });
         }
 
 
 
             if(currentUser.Data!=null){
-            var user = await _context.users.FirstOrDefaultAsync(x=>x.Id==currentUser.Data!.Id);
+            var user = await _context.Users.FirstOrDefaultAsync(x=>x.Id==currentUser.Data!.Id);
             if (user != null)
             {
                 user.RefreshTokenHash = null;
@@ -109,23 +109,25 @@ return Ok(result.Data);
 
 
 
-        await _action.AddActions(currentUser.Data!, "выход из аккаунта");
+        await _action.AddActionAsync(currentUser.Data!, "РІС‹С…РѕРґ РёР· Р°РєРєР°СѓРЅС‚Р°");
         await _context.SaveChangesAsync();
         RemoveUserCache(currentUser.Data!.Id);
 
 
-        _logger.LogInformation("Запрос выхода из аккаунта завершен. Идентификатор текущего пользователя: {CurrentUserId}", currentUser.Data!.Id);
+        _logger.LogInformation("Р—Р°РїСЂРѕСЃ РІС‹С…РѕРґР° РёР· Р°РєРєР°СѓРЅС‚Р° Р·Р°РІРµСЂС€РµРЅ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {CurrentUserId}", currentUser.Data!.Id);
         return Ok(new { Message = "Logged out" });
     }
 
     [AllowAnonymous]
  [HttpPost("admin")]
- public async Task<IActionResult> AdminAuth(LoginDTO dto)
+ public async Task<IActionResult> AuthenticateAdminAsync(LoginDto dto)
     {
 
-        var admin = await _auth.AdminAuth(dto);
+        var admin = await _auth.AuthenticateAdminAsync(dto);
         if(admin.Success){
         return Ok(admin.Data);}
- return Servicehelper.ToActionRes(this,admin);
+ return ServiceResultMapper.ToActionResult(this,admin);
     }
 }
+
+

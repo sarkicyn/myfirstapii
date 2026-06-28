@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.VisualBasic;
 
-public class PathRec 
+public class AllowedPathMiddleware 
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger<PathRec> _logger;
-    public PathRec(RequestDelegate next, ILogger<PathRec> logger)
+    private readonly ILogger<AllowedPathMiddleware> _logger;
+    public AllowedPathMiddleware(RequestDelegate next, ILogger<AllowedPathMiddleware> logger)
     {
         _next = next;/// сохраняем делегат
         _logger = logger;
@@ -49,3 +49,4 @@ var allowed = pathes.Any(item =>
        
     }
 }
+

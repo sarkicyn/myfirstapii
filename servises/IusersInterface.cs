@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using MyApiBlya.Services;
-public class User1
+public class CurrentUserProfileDto
 {
 
     
@@ -19,51 +19,51 @@ public  List<string>actions = new List<string>();
 public class LoginResponse
 {
     public string Jwt { get; set; } = string.Empty;
-    public string Refresh { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
 }
 
 
-public interface HashPassword
+public interface IPasswordHashService
 {
-    string HashPass(LoginDTO dto);
+    string HashPassword(LoginDto dto);
 }
-public interface IJwtCreate
+public interface IJwtTokenService
 {
-    Task<string> GenerateToken(User user);
-      Task<string> GenerateToken1(User user);
+    Task<string> GenerateUserTokenAsync(User user);
+      Task<string> GenerateAdminTokenAsync(User user);
 }
-public interface IAddAction  
+public interface IUserActionService  
 {
-    Task AddActions(User user,string act);
+    Task AddActionAsync(User user,string act);
 }
-public interface IRefreshing
+public interface IRefreshTokenService
 {
      (string RefreshToken, string Hash)GenerateRefreshToken(); 
      Task SaveRefreshTokenAsync(User user, string hash);
      
 }
-public interface IGoogl
+public interface IGoogleUserService
 {
-    Task<User> GoogleLogin(ClaimsPrincipal userClaims); 
+    Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims); 
 }
-public interface IGitHubing
+public interface IGitHubUserService
 {
-        public  Task<User> GithubLogin(ClaimsPrincipal claims);
+        public  Task<User> FindOrCreateGitHubUserAsync(ClaimsPrincipal claims);
 }
 public interface IUserService
 {
-     public  Task< ServiceResult<User>> GetOneUser(int id);
-     public  Task<ServiceResult<User?>> GetCurrentUserFromDatabaseAsync(ClaimsPrincipal user);
-     public  Task <ServiceResult<List<User>>> GetAllUsers();
-       public  Task<ServiceResult<User1>> me(ClaimsPrincipal user);
-        public  Task<ServiceResult<string>> Rename(int id, string name,ClaimsPrincipal user);
+     public  Task< ServiceResult<User>> GetUserByIdAsync(int id);
+     public  Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user);
+     public  Task <ServiceResult<List<User>>> GetAllUsersAsync();
+       public  Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user);
+        public  Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user);
 }
 
 public interface IAuthService
 {
-       public  Task<ServiceResult<LoginResponse>>Login(LoginDTO dTO);
-        public  Task<ServiceResult<string>>Refresh( RefreshRequest request);
-         public Task<ServiceResult<LoginResponse>> AdminAuth(LoginDTO dto);
+       public  Task<ServiceResult<LoginResponse>>AuthenticateAsync(LoginDto dTO);
+        public  Task<ServiceResult<string>>RefreshJwtAsync(RefreshRequest request);
+         public Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto);
 }
 
 public interface IOAuthService
@@ -71,3 +71,5 @@ public interface IOAuthService
       public Task <ServiceResult<LoginResponse>> HandleGoogleCallback();
       public  Task<ServiceResult<LoginResponse>> HandleGitHubCallback();
 }
+
+

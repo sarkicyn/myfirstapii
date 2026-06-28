@@ -1,4 +1,4 @@
-namespace MyApiBlya.Tests;
+﻿namespace MyApiBlya.Tests;
 using MyApiBlya.Tests;
 using Moq;
 using Microsoft.Extensions.Caching.Memory;
@@ -18,11 +18,11 @@ public class logoutTest
     public async Task Logout_WhenResult_NotOk()
     {
          var auth = new Mock<IAuthService>(); 
-        var action = new Mock<IAddAction>();
+        var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
-users.Setup(x=>x.GetCurrentUserFromDatabaseAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
+users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ"));
 
 var controller = new AuthController(action.Object,logger.Object,users.Object,auth.Object,null!,cache.Object);
 var result = await controller.Logout();
@@ -34,11 +34,11 @@ Assert.IsType<UnauthorizedObjectResult>(result);
    
     
          var auth = new Mock<IAuthService>(); 
-        var action = new Mock<IAddAction>();
+        var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
-users.Setup(x=>x.GetCurrentUserFromDatabaseAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Ok(new User
+users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Ok(new User
 {
     IsBlocked = true
 }));

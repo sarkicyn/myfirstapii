@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 using MyApiBlya.Services;
 
-public class JwtService : IJwtCreate
+public class JwtService : IJwtTokenService
 {
     private readonly string secretKey;
 
@@ -17,7 +17,7 @@ public class JwtService : IJwtCreate
             ?? throw new InvalidOperationException("Jwt:Key is not configured.");
     }
 
-    public async Task<string> GenerateToken(User user)
+    public async Task<string> GenerateUserTokenAsync(User user)
     {
             var claims= new List<Claim> //claims создают в токене подтверждение данных о пользователя
             {
@@ -46,7 +46,7 @@ return await Task.FromResult(handler);
       
     
 
-    public async Task<string> GenerateToken1(User user)
+    public async Task<string> GenerateAdminTokenAsync(User user)
     {
             var claims= new List<Claim> //claims создают в токене подтверждение данных о пользователя
             {
@@ -72,3 +72,5 @@ return await Task.FromResult(handler);
 
     } 
 }
+
+

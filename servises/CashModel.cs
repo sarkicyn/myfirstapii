@@ -1,4 +1,4 @@
-public static class CacheKeys
+﻿public static class CacheKeys
 {
     public static string UserById(int id) => $"user_{id}";
 
@@ -8,5 +8,6 @@ public static class CacheKeys
 
     public static string CurrentUserNotFound(int id) => $"current_user_{id}_not_found";
 
-    public static string UserHistory(int id) => $"history{id}";
+    public static string UserHistory(int id) => $"UserAction{id}";
 }
+

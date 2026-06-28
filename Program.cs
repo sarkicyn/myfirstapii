@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +36,7 @@ builder.Services.AddControllers()
 
             return new BadRequestObjectResult(new
             {
-                message = error?.ErrorMessage ?? "Некорректные данные запроса."
+                message = error?.ErrorMessage ?? "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ Р·Р°РїСЂРѕСЃР°."
             });
         };
     });
@@ -65,13 +65,13 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOAuthService, OAuthService>();
-builder.Services.AddScoped<HashPassword, HashPassik>();
-builder.Services.AddScoped<IAddAction, Adding>();
-builder.Services.AddScoped<IJwtCreate, JwtService>();
-builder.Services.AddHostedService<LoggService>();
-builder.Services.AddScoped<IRefreshing,Refresh>();
-builder.Services.AddScoped<IGoogl,Google>(); 
-builder.Services.AddScoped<IGitHubing,GithubService>();
+builder.Services.AddScoped<IPasswordHashService, BCryptPasswordHashService>();
+builder.Services.AddScoped<IUserActionService, UserActionService>();
+builder.Services.AddScoped<IJwtTokenService, JwtService>();
+builder.Services.AddHostedService<BackgroundLoggingService>();
+builder.Services.AddScoped<IRefreshTokenService,RefreshTokenService>();
+builder.Services.AddScoped<IGoogleUserService,GoogleUserService>(); 
+builder.Services.AddScoped<IGitHubUserService,GitHubUserService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -95,20 +95,20 @@ builder.Services
     .AddCookie("Sexcheme")
 .AddGoogle(options =>
     {
-        options.SignInScheme = "Sexcheme";
+        options.SignInScheme = "cheme";
         options.ClientId = builder.Configuration[$"Authentication:Google:ClientId"]
-            ?? throw new InvalidOperationException("Google ClientId не настроен.");
+            ?? throw new InvalidOperationException("Google ClientId РЅРµ РЅР°СЃС‚СЂРѕРµРЅ.");
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]
-            ?? throw new InvalidOperationException("Google ClientSecret не настроен.");
+            ?? throw new InvalidOperationException("Google ClientSecret РЅРµ РЅР°СЃС‚СЂРѕРµРЅ.");
             options.CallbackPath = "/google-path";
     })
     .AddGitHub(options =>
     {
-        options.SignInScheme = "Sexcheme";
+        options.SignInScheme = "cheme";
         options.ClientId = builder.Configuration["Authentication:GitHub:ClientId"]
-            ?? throw new InvalidOperationException("GitHub ClientId не настроен.");
+            ?? throw new InvalidOperationException("GitHub ClientId РЅРµ РЅР°СЃС‚СЂРѕРµРЅ.");
         options.ClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"]
-            ?? throw new InvalidOperationException("GitHub ClientSecret не настроен.");
+            ?? throw new InvalidOperationException("GitHub ClientSecret РЅРµ РЅР°СЃС‚СЂРѕРµРЅ.");
             options.CallbackPath = "/github-path";
     })
     .AddJwtBearer(options =>
@@ -155,7 +155,7 @@ builder.Services
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsJsonAsync(new
                 {
-                    message = "JWT-токен недействителен или истек."
+                    message = "JWT-С‚РѕРєРµРЅ РЅРµРґРµР№СЃС‚РІРёС‚РµР»РµРЅ РёР»Рё РёСЃС‚РµРє."
                 });
             },
             OnChallenge = async context =>
@@ -170,7 +170,7 @@ builder.Services
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsJsonAsync(new
                 {
-                    message = "Необходим действительный JWT-токен."
+                    message = "РќРµРѕР±С…РѕРґРёРј РґРµР№СЃС‚РІРёС‚РµР»СЊРЅС‹Р№ JWT-С‚РѕРєРµРЅ."
                 });
             },
             OnForbidden = async context =>
@@ -179,13 +179,13 @@ builder.Services
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await context.Response.WriteAsJsonAsync(new
                 {
-                    message = "У вас нет прав для доступа к этому ресурсу."
+                    message = "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РґР»СЏ РґРѕСЃС‚СѓРїР° Рє СЌС‚РѕРјСѓ СЂРµСЃСѓСЂСЃСѓ."
                 });     
             },
             
         };
     });
-builder.Services.AddCors(options =>  //добавляем разрешенные адреса,с которых можно делать запрос к моему api 
+builder.Services.AddCors(options =>  //РґРѕР±Р°РІР»СЏРµРј СЂР°Р·СЂРµС€РµРЅРЅС‹Рµ Р°РґСЂРµСЃР°,СЃ РєРѕС‚РѕСЂС‹С… РјРѕР¶РЅРѕ РґРµР»Р°С‚СЊ Р·Р°РїСЂРѕСЃ Рє РјРѕРµРјСѓ api 
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
@@ -214,12 +214,12 @@ app.UseExceptionHandler(errorApp =>
             .GetRequiredService<ILoggerFactory>()
             .CreateLogger("GlobalExceptionHandler");
 
-        logger.LogError(exception, "Необработанная ошибка при обработке запроса.");
+        logger.LogError(exception, "РќРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅР°СЏ РѕС€РёР±РєР° РїСЂРё РѕР±СЂР°Р±РѕС‚РєРµ Р·Р°РїСЂРѕСЃР°.");
 
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await context.Response.WriteAsJsonAsync(new
         {
-            message = "Произошла непредвиденная ошибка сервера."
+            message = "РџСЂРѕРёР·РѕС€Р»Р° РЅРµРїСЂРµРґРІРёРґРµРЅРЅР°СЏ РѕС€РёР±РєР° СЃРµСЂРІРµСЂР°."
         });
     });
 });
@@ -234,12 +234,12 @@ app.UseStatusCodePages(async context =>
     }
     var message = response.StatusCode  switch
     {
-        StatusCodes.Status400BadRequest => "Некорректный запрос.",
-        StatusCodes.Status401Unauthorized => "Требуется авторизация.",
-        StatusCodes.Status403Forbidden => "Доступ запрещен.",
-        StatusCodes.Status404NotFound => "Ресурс не найден.",
-        StatusCodes.Status405MethodNotAllowed => "HTTP-метод не разрешен для этого маршрута.",
-        _ => "Запрос не выполнен."
+        StatusCodes.Status400BadRequest => "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ Р·Р°РїСЂРѕСЃ.",
+        StatusCodes.Status401Unauthorized => "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ.",
+        StatusCodes.Status403Forbidden => "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ.",
+        StatusCodes.Status404NotFound => "Р РµСЃСѓСЂСЃ РЅРµ РЅР°Р№РґРµРЅ.",
+        StatusCodes.Status405MethodNotAllowed => "HTTP-РјРµС‚РѕРґ РЅРµ СЂР°Р·СЂРµС€РµРЅ РґР»СЏ СЌС‚РѕРіРѕ РјР°СЂС€СЂСѓС‚Р°.",
+        _ => "Р—Р°РїСЂРѕСЃ РЅРµ РІС‹РїРѕР»РЅРµРЅ."
     };
 
     await response.WriteAsJsonAsync(new { message });
@@ -260,9 +260,11 @@ app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<PathRec>();
-app.UseMiddleware<dataMiddleWare>();
+app.UseMiddleware<AllowedPathMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.MapControllers();
 
 app.Run();
+
+

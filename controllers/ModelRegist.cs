@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
-public class LoginDTO()
-{[Required(ErrorMessage = "Логин обязателен.")]
+public class LoginDto()
+{[Required(ErrorMessage = "Р›РѕРіРёРЅ РѕР±СЏР·Р°С‚РµР»РµРЅ.")]
 [StringLength(30, MinimumLength = 3)]
 [RegularExpression(@"^[a-zA-Z0-9_\.]+$")]   
-    public string?login{get;set;}
-    [Required(ErrorMessage = "Пароль обязателен.")]
+    public string? Login { get; set; }
+    [Required(ErrorMessage = "РџР°СЂРѕР»СЊ РѕР±СЏР·Р°С‚РµР»РµРЅ.")]
     [StringLength(100, MinimumLength = 8)]
     public string? password{get;set;}
 }
@@ -13,5 +13,6 @@ public class LoginDTO()
 public class RefreshRequest
 {
 
-    public string? Refresh { get; set; }
+    public string? RefreshToken { get; set; }
 }
+
