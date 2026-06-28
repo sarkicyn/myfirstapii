@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
@@ -40,7 +40,7 @@ private readonly IGitHubUserService _git;
     var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("Sexcheme");
 if(!authResult.Succeeded||authResult.Principal is null)
         {
-            return ServiceResult<LoginResponse>.Fail("РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ С‡РµСЂРµР· Google.");
+            return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через Google.");
         }
    var result = await _google.FindOrCreateGoogleUserAsync(authResult.Principal);
 if (result.IsBlocked)
@@ -50,7 +50,7 @@ if (result.IsBlocked)
         }
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
-_logger.LogInformation("РЎРіРµРЅРµСЂРёСЂРѕРІР°РЅ refresh token РґР»СЏ РІС…РѕРґР° С‡РµСЂРµР· Google.");
+_logger.LogInformation("Сгенерирован refresh token для входа через Google.");
 await _fresh.SaveRefreshTokenAsync(result,hash);
         
 
@@ -58,7 +58,7 @@ await _fresh.SaveRefreshTokenAsync(result,hash);
       var jwt = await _jwt.GenerateUserTokenAsync(result);
         await _context.SaveChangesAsync();
         RemoveUserCache(result.Id);
-await _action.AddActionAsync(result, "РІС…РѕРґ С‡РµСЂРµР· google");
+await _action.AddActionAsync(result, "вход через google");
 await _httpContextAccessor.HttpContext!.SignOutAsync("Sexcheme");
        
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{
@@ -69,7 +69,7 @@ await _httpContextAccessor.HttpContext!.SignOutAsync("Sexcheme");
   var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("Sexcheme");
 if(!authResult.Succeeded||authResult.Principal is null)
         {
-            return ServiceResult<LoginResponse>.Fail("РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ С‡РµСЂРµР· GitHub.");
+            return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через GitHub.");
         }
    var result = await _git.FindOrCreateGitHubUserAsync(authResult.Principal);
 if (result.IsBlocked)
@@ -79,7 +79,7 @@ if (result.IsBlocked)
         }
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
-_logger.LogInformation("РЎРіРµРЅРµСЂРёСЂРѕРІР°РЅ refresh token РґР»СЏ РІС…РѕРґР° С‡РµСЂРµР· GitHub.");
+_logger.LogInformation("Сгенерирован refresh token для входа через GitHub.");
 await _fresh.SaveRefreshTokenAsync(result,hash);
         
         
@@ -87,7 +87,7 @@ await _fresh.SaveRefreshTokenAsync(result,hash);
       var jwt = await _jwt.GenerateUserTokenAsync(result);
         await _context.SaveChangesAsync();
         RemoveUserCache(result.Id);
-await _action.AddActionAsync(result, "РІС…РѕРґ С‡РµСЂРµР· github");
+await _action.AddActionAsync(result, "вход через github");
 await _httpContextAccessor.HttpContext!.SignOutAsync("Sexcheme");
        
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{

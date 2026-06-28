@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
@@ -40,7 +40,7 @@ var UserAction =new UserActionHistory(){
 await _context.UserActionHistories.AddAsync(UserAction);
 await _context.SaveChangesAsync(); 
 _cache.Remove(CacheKeys.UserHistory(user.Id));
-_logger.LogInformation("Р”РѕР±Р°РІР»РµРЅР° РёСЃС‚РѕСЂРёСЏ РґРµР№СЃС‚РІРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {UserId}, РґРµР№СЃС‚РІРёРµ: {Action}", user.Id, act);
+_logger.LogInformation("Добавлена история действия пользователя. Идентификатор пользователя: {UserId}, действие: {Action}", user.Id, act);
 
         
 

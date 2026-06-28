@@ -1,4 +1,4 @@
-﻿namespace MyApiBlya.Tests;
+namespace MyApiBlya.Tests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +19,7 @@ public class TestAdminAuth
 
         var auth = new Mock<IAuthService>();
         auth.Setup(x => x.AuthenticateAdminAsync(dto))
-            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("РЅРµРІРµСЂРЅС‹Рµ РґР°РЅРЅС‹Рµ"));
+            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверные данные"));
 
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AuthController>>();

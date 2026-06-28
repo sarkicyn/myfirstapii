@@ -14,11 +14,6 @@ using Microsoft.EntityFrameworkCore;
 public class CurrentUserTest()
 {
     [Fact]
-    public async Task Me_WhenUser_NotFound()
-    {
-        
-    }
-    [Fact]
     public async Task UnBlockUser_WhenResult_NotOk()
     {
         var action = new Mock<IUserActionService>();
@@ -27,7 +22,7 @@ public class CurrentUserTest()
         var users = new Mock<IUserService>();
 
         users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -98,7 +93,7 @@ public class CurrentUserTest()
             }));
 
         users.Setup(x => x.RenameUserAsync(1, "newName", It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<string>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<string>.Fail("ошибка"));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -115,7 +110,7 @@ public class CurrentUserTest()
         var users = new Mock<IUserService>();
 
         users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -168,7 +163,7 @@ public class CurrentUserTest()
         var UserAction = new UserAction
         {
             Id = 1,
-            Action = "С‚РµСЃС‚РѕРІРѕРµ РґРµР№СЃС‚РІРёРµ"
+            Action = "тестовое действие"
         };
 
         context.Users.Add(user);
@@ -190,7 +185,7 @@ public class CurrentUserTest()
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var historyResult = Assert.IsType<List<UserHistoryDto>>(ok.Value);
-        Assert.Equal("С‚РµСЃС‚РѕРІРѕРµ РґРµР№СЃС‚РІРёРµ", historyResult[0].action);
+        Assert.Equal("тестовое действие", historyResult[0].action);
     }
 }
 

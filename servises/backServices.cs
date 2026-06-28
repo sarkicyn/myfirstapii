@@ -1,4 +1,4 @@
-﻿using MyApiBlya.Services;
+using MyApiBlya.Services;
 using Microsoft.Extensions.Hosting;
 public class BackgroundLoggingService : BackgroundService
 {
@@ -9,7 +9,7 @@ public class BackgroundLoggingService : BackgroundService
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {while(!stoppingToken.IsCancellationRequested){
-        _logg.LogInformation("Р¤РѕРЅРѕРІР°СЏ СЃР»СѓР¶Р±Р° Р»РѕРіРёСЂРѕРІР°РЅРёСЏ СЂР°Р±РѕС‚Р°РµС‚.");
+        _logg.LogInformation("Фоновая служба логирования работает.");
 await Task.Delay(100000,stoppingToken);
     }
 

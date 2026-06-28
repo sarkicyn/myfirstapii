@@ -1,4 +1,4 @@
-﻿namespace MyApiBlya.Tests;
+namespace MyApiBlya.Tests;
 
 using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -55,7 +55,7 @@ public class OAuthControllerTests
     {
         var auth  = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
-        auth.Setup(x=>x.HandleGoogleCallback()).ReturnsAsync(ServiceResult<LoginResponse>.Fail("РѕС€РёР±РєР°"));
+        auth.Setup(x=>x.HandleGoogleCallback()).ReturnsAsync(ServiceResult<LoginResponse>.Fail("ошибка"));
         var controller = new OAuthController(auth.Object,loger.Object);
     var result = await controller.GoogleCallback(); 
     Assert.IsType<BadRequestObjectResult>(result);
@@ -104,7 +104,7 @@ public class OAuthControllerTests
         var loger = new Mock<ILogger<OAuthController>>();
 
         auth.Setup(x => x.HandleGitHubCallback())
-            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("ошибка"));
 
         var controller = new OAuthController(auth.Object, loger.Object);
 

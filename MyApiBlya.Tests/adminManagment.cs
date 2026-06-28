@@ -1,4 +1,4 @@
-﻿
+
 using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +20,7 @@ public class adminManage
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();   
-        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
         var controller = new AdminUsersController(action.Object,logger.Object,users.Object,null!,cache.Object);
         var result =await controller.GetUsers();
     Assert.IsType<UnauthorizedObjectResult>(result); 
@@ -59,7 +59,7 @@ public class adminManage
         var users = new Mock<IUserService>();
 
         users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -99,7 +99,7 @@ public class adminManage
         var users = new Mock<IUserService>();
 
         users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -167,7 +167,7 @@ public class adminManage
         var users = new Mock<IUserService>();
 
         users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -235,7 +235,7 @@ public class adminManage
         var users = new Mock<IUserService>();
 
         users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("РѕС€РёР±РєР°"));
+            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 

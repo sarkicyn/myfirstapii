@@ -1,4 +1,4 @@
-﻿using AspNet.Security.OAuth.GitHub;
+using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
@@ -51,11 +51,11 @@ public async Task<IActionResult> GoogleCallback()
             if (result.Error == "account_blocked")
             {
                 _logger.LogWarning("OAuth Google callback rejected: user account is blocked.");
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: РІР°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ." });
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
             }
 
             _logger.LogWarning("OAuth Google callback failed. Error: {Error}", result.Error);
-            return BadRequest(new { message = result.Error ?? "РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ." });
+            return BadRequest(new { message = result.Error ?? "Не удалось выполнить аутентификацию." });
         }
 
 
@@ -92,11 +92,11 @@ public async Task<IActionResult> GithubCallback()
             if (result.Error == "account_blocked")
             {
                 _logger.LogWarning("OAuth GitHub callback rejected: user account is blocked.");
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Р”РµР№СЃС‚РІРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ: РІР°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ." });
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
             }
 
             _logger.LogWarning("OAuth GitHub callback failed. Error: {Error}", result.Error);
-            return BadRequest(new { message = result.Error ?? "РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ." });
+            return BadRequest(new { message = result.Error ?? "Не удалось выполнить аутентификацию." });
         }
  return Redirect(BuildAuthCompleteRedirect(result.Data!));
 }

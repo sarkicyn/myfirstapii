@@ -7,14 +7,14 @@ services:
     ports:
       - "5063:5063"
     environment:
-      Authentication__Google__ClientId: ${GoogleClientId}
-      Authentication__Google__ClientSecret: ${GoogleClientSecret}
-      Authentication__GitHub__ClientId: ${GitHubClientId}
-      Authentication__GitHub__ClientSecret: ${GitHubClientSecret}
+      Authentication__Google__ClientId: ${Authentication__Google__ClientId}
+      Authentication__Google__ClientSecret: ${Authentication__Google__ClientSecret}
+      Authentication__GitHub__ClientId: ${Authentication__GitHub__ClientId}
+      Authentication__GitHub__ClientSecret: ${Authentication__GitHub__ClientSecret}
       ASPNETCORE_HTTP_PORTS: 5063
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${Database};Username=${Username};Password=${Password}"
-      JWT_KEY: ${JWT_KEY:?JWT_KEY is required}
+      Jwt__Key: ${Jwt__Key:?Jwt__Key is required}
       ADMIN_LOGIN: ${ADMIN_LOGIN}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     healthcheck:

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MyApiBlya.Services;
 
@@ -27,7 +27,7 @@ public class GitHubUserService : IGitHubUserService
         if (string.IsNullOrWhiteSpace(githubId))
         {
             _logger.LogWarning("GitHub authentication failed: provider user id is missing.");
-            throw new Exception("РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ GitHub РЅРµ РЅР°Р№РґРµРЅ.");
+            throw new Exception("Идентификатор пользователя GitHub не найден.");
         }
 
         var user = await _context.Users
@@ -54,7 +54,7 @@ public class GitHubUserService : IGitHubUserService
 
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("РЎРѕР·РґР°РЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С‡РµСЂРµР· GitHub. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {UserId}", user.Id);
+        _logger.LogInformation("Создан пользователь через GitHub. Идентификатор пользователя: {UserId}", user.Id);
 
         return user;
     }

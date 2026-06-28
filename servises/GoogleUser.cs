@@ -1,4 +1,4 @@
-﻿    using System.Security.Claims;
+    using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System;
 using MyApiBlya.Services;
@@ -21,7 +21,7 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
     if (string.IsNullOrWhiteSpace(providerId))
     {
         _logger.LogWarning("Google authentication failed: provider user id is missing.");
-        throw new Exception("РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Google РЅРµ РЅР°Р№РґРµРЅ.");
+        throw new Exception("Идентификатор пользователя Google не найден.");
     }
 
     var user = await _context.Users
@@ -49,7 +49,7 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
 
       await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("РЎРѕР·РґР°РЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С‡РµСЂРµР· Google. РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: {UserId}", user.Id);
+        _logger.LogInformation("Создан пользователь через Google. Идентификатор пользователя: {UserId}", user.Id);
     }
 
     return user;

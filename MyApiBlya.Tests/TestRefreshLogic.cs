@@ -1,4 +1,4 @@
-﻿namespace MyApiBlya.Tests;
+namespace MyApiBlya.Tests;
 using MyApiBlya.Tests;
 using Moq;
 using Microsoft.Extensions.Caching.Memory;
@@ -21,7 +21,7 @@ public class TestRefreshLogic()
         RefreshToken = "test-refresh-token"
     };
        var refreshAuthService = new Mock<IAuthService>();
-       refreshAuthService.Setup(x=>x.RefreshJwtAsync(request)).ReturnsAsync(ServiceResult<string>.Fail("РЅРµРІРµСЂРЅС‹Рµ РґР°РЅРЅС‹Рµ"));
+       refreshAuthService.Setup(x=>x.RefreshJwtAsync(request)).ReturnsAsync(ServiceResult<string>.Fail("неверные данные"));
        var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
