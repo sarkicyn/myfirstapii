@@ -202,7 +202,7 @@ builder.Services.AddCors(options =>  //добавляем разрешенные
     });
 });
 var app = builder.Build();
-
+app.MapHealthChecks("/health");
 app.UseExceptionHandler(errorApp =>
 {
     

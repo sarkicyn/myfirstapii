@@ -18,7 +18,7 @@ services:
       ADMIN_LOGIN: ${ADMIN_LOGIN}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     healthcheck:
-     test: ["CMD-SHELL", "pg_isready -U ${Username} -d ${Database}"] 
+     test: ["CMD-SHELL", "pg_isready -U ${Username} -d ${Database} && curl -f http://localhost:5063/health || exit 1"] 
      interval : 30s
      timeout :  5s
      retries : 3
@@ -39,7 +39,7 @@ services:
     volumes:
       - database:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${Username} -d ${Database}"  ]
+      test: ["CMD-SHELL", "pg_isready -U ${Username} -d ${Database}"]
       interval: 50s
       timeout: 30s
       retries: 3
