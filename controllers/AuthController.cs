@@ -50,7 +50,27 @@ public class AuthController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
         }
 
-        var result = await _auth.AuthenticateAsync(dTO);
+        var result = await _auth.LoginAsync(dTO);
+if (!result.Success)
+        {
+          return  ServiceResultMapper.ToActionResult(this,result);
+        }
+
+        return Ok(result.Data);
+    }
+    
+    [AllowAnonymous]
+    [HttpPost("register")]
+        public async Task<IActionResult> Register(LoginDto dTO)
+        {
+        var current = await _users.GetCurrentUserAsync(User);
+        if (current.Success && current.Data is not null && current.Data.IsBlocked)
+        {
+            _logger.LogWarning("Вход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", current.Data.Id);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+        }
+
+        var result = await _auth.RegisterAsync(dTO);
 if (!result.Success)
         {
           return  ServiceResultMapper.ToActionResult(this,result);
@@ -129,5 +149,4 @@ return Ok(result.Data);
  return ServiceResultMapper.ToActionResult(this,admin);
     }
 }
-
 

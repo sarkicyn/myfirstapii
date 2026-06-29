@@ -36,10 +36,6 @@ private readonly IPasswordHashService _hashpass;
         _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
 
-     public async Task<ServiceResult<LoginResponse>>AuthenticateAsync(LoginDto dTO){
-        return await LoginAsync(dTO);
- }
-
      public async Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO){
     if (dTO is null)
             {
@@ -184,19 +180,24 @@ return ServiceResult<string>.Ok(jwt);
         }
 
           var adminLogin = _conf["ADMIN_LOGIN"];
-var adminPassword = _conf["ADMIN_PASSWORD"];
-        if (dto.Login == adminLogin && dto.password == adminPassword)
+var adminPasswordHash = _conf["ADMIN_PASSWORD_HASH"];
+if (string.IsNullOrWhiteSpace(adminLogin) ||
+    string.IsNullOrWhiteSpace(adminPasswordHash))
+{
+    return ServiceResult<LoginResponse>.Fail("Неверные данные.");
+}
+
+        if (dto.Login == adminLogin &&  BCrypt.Net.BCrypt.Verify(dto.password, adminPasswordHash))
         {
             
         
           var user = await _context.Users.FirstOrDefaultAsync(x=>x.Login == dto.Login);
         if (user == null)
         {
-var HashPassword =  _hashpass.HashPassword(dto);
             user = new User()
             {
                 Login = dto.Login,
-                Password = HashPassword,
+                Password = adminPasswordHash,
                 Role = "Admin",
                 IsBlocked = false,
                 CreatedAt = DateTime.UtcNow
@@ -215,5 +216,4 @@ var HashPassword =  _hashpass.HashPassword(dto);
     return ServiceResult<LoginResponse>.Fail("Неверные данные.");
     }
 }
-
 

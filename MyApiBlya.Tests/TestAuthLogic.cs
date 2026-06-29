@@ -28,7 +28,7 @@ public class TestAuthLogic
             password = password
         }; 
 var authServiceMock = new Mock<IAuthService>();
-authServiceMock.Setup(x=>x.AuthenticateAsync(It.IsAny<LoginDto>())).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверно введены данные"));
+authServiceMock.Setup(x=>x.LoginAsync(It.IsAny<LoginDto>())).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверно введены данные"));
 var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
@@ -38,7 +38,7 @@ var auth = new Mock<IAuthService>();
 var controller = new AuthController(action.Object,logger.Object,users.Object,authServiceMock.Object,null!,cache.Object);
 var result  = await controller.Login(dto);
 Assert.IsType<BadRequestObjectResult>(result); 
-authServiceMock.Verify(x=>x.AuthenticateAsync(dto),Times.Once);
+authServiceMock.Verify(x=>x.LoginAsync(dto),Times.Once);
     }
 
   [Theory]
@@ -58,7 +58,7 @@ var dto = new LoginDto
 };
 
         var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!); 
-        var result = await service.AuthenticateAsync(dto);
+        var result = await service.LoginAsync(dto);
         
 Assert.False(result.Success);
 Assert.NotNull(result.Error);
@@ -89,7 +89,7 @@ var result = await controller.Login(new LoginDto
     
 });
  Assert.IsType<ObjectResult>(result);
-auth.Verify(x=>x.AuthenticateAsync(It.IsAny<LoginDto>()),Times.Never);
+auth.Verify(x=>x.LoginAsync(It.IsAny<LoginDto>()),Times.Never);
     }
     [Fact]
     public async Task Login_WhenResult_Ok()
@@ -108,7 +108,7 @@ auth.Verify(x=>x.AuthenticateAsync(It.IsAny<LoginDto>()),Times.Never);
         var users = new Mock<IUserService>();
         var auth  = new Mock<IAuthService>();
         users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
-        auth.Setup(x=>x.AuthenticateAsync(dto)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(tokens));
+        auth.Setup(x=>x.LoginAsync(dto)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(tokens));
           
         var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();

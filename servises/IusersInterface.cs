@@ -6,7 +6,6 @@ public class    CurrentUserProfileDto
 
     
     public string? Login { get; set; } 
-    public string? Password { get; set; } = ""; 
     public string? Role {get;set;}  
     
 
@@ -61,7 +60,6 @@ public interface IUserService
 
 public interface IAuthService
 {
-       public  Task<ServiceResult<LoginResponse>>AuthenticateAsync(LoginDto dTO);
        public  Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO);
        public  Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO);
         public  Task<ServiceResult<string>>RefreshJwtAsync(RefreshRequest request);
@@ -73,4 +71,3 @@ public interface IOAuthService
       public Task <ServiceResult<LoginResponse>> HandleGoogleCallback();
       public  Task<ServiceResult<LoginResponse>> HandleGitHubCallback();
 }
-
