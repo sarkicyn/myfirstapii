@@ -143,9 +143,7 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
          var User  = new CurrentUserProfileDto()
          {
              Login = currentUser.Data.Login,
-             Password= currentUser.Data.Password,
-             Role = "User",
-RefreshTokenHash = currentUser.Data.RefreshTokenHash
+             Role = "User"
          };
             return ServiceResult<CurrentUserProfileDto>.Ok(User);
         }

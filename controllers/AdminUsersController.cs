@@ -106,7 +106,7 @@ public class AdminUsersController : ControllerBase
 
 
         _logger.LogInformation("Запрос списка пользователей завершен. Идентификатор текущего пользователя: {CurrentUserId}, количество пользователей: {UsersCount}", currentUser.Data!.Id, users?.Data?.Count ?? 0);
-        return Ok(users);
+        return Ok(users!.Data);
     }
 
 [Authorize(Roles = "Admin")]

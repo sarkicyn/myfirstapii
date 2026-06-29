@@ -37,6 +37,10 @@ private readonly IPasswordHashService _hashpass;
     }
 
      public async Task<ServiceResult<LoginResponse>>AuthenticateAsync(LoginDto dTO){
+        return await LoginAsync(dTO);
+ }
+
+     public async Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO){
     if (dTO is null)
             {
      return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.");
@@ -59,15 +63,59 @@ bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
             
         }
 
-            if (await _context.Users.AnyAsync(user => user.Login == dTO.Login))
-            {
-     return ServiceResult<LoginResponse>.Fail("Логин уже занят.");
-            
-            }
 var (refreshToken, hash) = _fresh.GenerateRefreshToken();
 _logger.LogInformation("Сгенерирован refresh token для входа пользователя."); 
-var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login&&x.Password==dTO.password); 
+var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
 if(us==null){ 
+     return ServiceResult<LoginResponse>.Fail("неверный логин.");
+}
+if(!BCrypt.Net.BCrypt.Verify(dTO.password, us.Password)){
+     return ServiceResult<LoginResponse>.Fail("неверный пароль.");
+}
+await _fresh.SaveRefreshTokenAsync(us,hash);
+        await _context.SaveChangesAsync();
+
+      var jwt = await _jwt.GenerateUserTokenAsync(us);
+        await _context.SaveChangesAsync();
+        RemoveUserCache(us.Id);
+        await _action.AddActionAsync(us, "вход пользователя");
+       
+        return ServiceResult<LoginResponse>.Ok(new LoginResponse
+{
+    Jwt = jwt,
+    RefreshToken = refreshToken
+}); 
+ }
+
+     public async Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO){
+    if (dTO is null)
+            {
+     return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dTO.Login) || string.IsNullOrWhiteSpace(dTO.password))
+            {
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+                   
+            }
+            if (dTO.Login.Length <= 3 || dTO.password.Length <= 3)
+        {
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+            
+        }
+bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
+        if (regg)
+        {
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+            
+        }
+
+var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
+if(us!=null){ 
+     return ServiceResult<LoginResponse>.Fail("Логин уже занят.");
+}
+var (refreshToken, hash) = _fresh.GenerateRefreshToken();
+_logger.LogInformation("Сгенерирован refresh token для регистрации пользователя."); 
     var HashPassword =  _hashpass.HashPassword(dTO); 
          us = new User()
         {  
@@ -75,7 +123,7 @@ if(us==null){
             Password = HashPassword,
             Role = "User",
             CreatedAt = DateTime.UtcNow
-        };}
+        };
 await _fresh.SaveRefreshTokenAsync(us,hash);
         await _context.Users.AddAsync(us);
         await _context.SaveChangesAsync();
@@ -83,7 +131,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
       var jwt = await _jwt.GenerateUserTokenAsync(us);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
-        await _action.AddActionAsync(us, "вход пользователя");
+        await _action.AddActionAsync(us, "регистрация пользователя");
        
         return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
@@ -118,8 +166,12 @@ if (userTrue.RefreshTokenExpiresAt <= DateTime.UtcNow)
      return ServiceResult<string>.Fail("Срок действия токена истек. Выполните вход заново.");
     
     
-}
-var jwt  = await _jwt.GenerateAdminTokenAsync(userTrue);
+}if(userTrue.Role=="Admin"){
+var jwtAdmin  = await _jwt.GenerateAdminTokenAsync(userTrue);
+await _action.AddActionAsync(userTrue, "обновление jwt токена");
+return ServiceResult<string>.Ok(jwtAdmin);}
+
+var jwt  = await _jwt.GenerateUserTokenAsync(userTrue);
 await _action.AddActionAsync(userTrue, "обновление jwt токена");
 return ServiceResult<string>.Ok(jwt);
    }
@@ -137,14 +189,14 @@ var adminPassword = _conf["ADMIN_PASSWORD"];
         {
             
         
-          var user = await _context.Users.FirstOrDefaultAsync(x=>x.Login == dto.Login && x.Password == dto.password);
+          var user = await _context.Users.FirstOrDefaultAsync(x=>x.Login == dto.Login);
         if (user == null)
         {
-
+var HashPassword =  _hashpass.HashPassword(dto);
             user = new User()
             {
                 Login = dto.Login,
-                Password = dto.password,
+                Password = HashPassword,
                 Role = "Admin",
                 IsBlocked = false,
                 CreatedAt = DateTime.UtcNow
@@ -163,6 +215,5 @@ var adminPassword = _conf["ADMIN_PASSWORD"];
     return ServiceResult<LoginResponse>.Fail("Неверные данные.");
     }
 }
-
 
 

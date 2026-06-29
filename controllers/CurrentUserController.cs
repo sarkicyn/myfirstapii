@@ -68,7 +68,7 @@ await _context.SaveChangesAsync();
         var result  = await _users.RenameUserAsync(current.Data!.Id, newLogin, User);
         if (result.Success)
         {
-            return Ok(result);
+            return Ok(result.Data);
         }
 
         return ServiceResultMapper.ToActionResult(this,result);
