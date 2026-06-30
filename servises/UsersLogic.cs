@@ -39,7 +39,9 @@ public class UserService : IUserService
         if (!_cache.TryGetValue(cacheKey, out User? user))
         {
             _logger.LogInformation("Пользователь не найден в кэше. Идентификатор запрошенного пользователя: {RequestedUserId}", id);
-            user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
+            user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
                 _cache.Set(notFoundCacheKey, true, TimeSpan.FromSeconds(15));
@@ -115,7 +117,9 @@ if (currentUser != null)
   public async Task<ServiceResult<List<User>>> GetAllUsersAsync(){
        
            
-           var users = await _context.Users.ToListAsync();
+           var users = await _context.Users
+               .AsNoTracking()
+               .ToListAsync();
         
        
             if (users == null)
@@ -167,7 +171,9 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
             
         }
 
-        if (await _context.Users.AnyAsync(user => user.Id != id && user.Login == name))
+        if (await _context.Users
+            .AsNoTracking()
+            .AnyAsync(user => user.Id != id && user.Login == name))
         {
      return ServiceResult<string>.Fail("Логин уже занят.");
             
@@ -187,5 +193,4 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
 return ServiceResult<string>.Ok($"вы сменили имя на {name}");
  }
 }
-
 

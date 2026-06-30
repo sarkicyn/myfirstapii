@@ -106,7 +106,9 @@ bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
             
         }
 
-var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
+var us = await _context.Users
+    .AsNoTracking()
+    .FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
 if(us!=null){ 
      return ServiceResult<LoginResponse>.Fail("Логин уже занят.");
 }
@@ -148,7 +150,9 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
        var token = Convert.ToBase64String(
             SHA256.HashData(
                 Encoding.UTF8.GetBytes(refToken)));
-        var userTrue = await _context.Users.FirstOrDefaultAsync(x =>
+        var userTrue = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x =>
             x.RefreshTokenHash == token ||
             x.RefreshTokenHash == refToken);
        if (userTrue is null)
@@ -216,4 +220,3 @@ if (string.IsNullOrWhiteSpace(adminLogin) ||
     return ServiceResult<LoginResponse>.Fail("Неверные данные.");
     }
 }
-

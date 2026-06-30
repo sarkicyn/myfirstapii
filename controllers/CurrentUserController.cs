@@ -95,6 +95,7 @@ await _context.SaveChangesAsync();
 if (!_cache.TryGetValue(hasheKey, out List<UserHistoryDto>? newActions)){
         var moscowZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
 var  actions = await _context.UserActionHistories
+    .AsNoTracking()
     .Where(x => x.users_id == currentUser.Data!.Id)
     .Select(x => new  UserHistoryDto
     {
@@ -118,5 +119,4 @@ var  actions = await _context.UserActionHistories
         return Unauthorized();
 }
 }
-
 

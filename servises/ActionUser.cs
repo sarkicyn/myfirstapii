@@ -21,7 +21,9 @@ if (!user.actions.Contains(act))
     user.actions.Add(act);
 }
 
-var action  = await _context.UserActions.FirstOrDefaultAsync(x=>x.Action==act);
+var action  = await _context.UserActions
+    .AsNoTracking()
+    .FirstOrDefaultAsync(x=>x.Action==act);
         if (action == null)
         {
              action = new UserAction()
