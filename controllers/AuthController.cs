@@ -85,7 +85,7 @@ if (!result.Success)
     {
 
 
-       var result = await _auth.RefreshJwtAsync(request);
+       var result = await _auth.RefreshAllTokens(request);
         if (!result.Success)
         {
             return ServiceResultMapper.ToActionResult(this,result);

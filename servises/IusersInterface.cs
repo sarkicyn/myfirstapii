@@ -70,7 +70,7 @@ public interface IAuthService
 {
        public  Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO);
        public  Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO);
-        public  Task<ServiceResult<string>>RefreshJwtAsync(RefreshRequest request);
+        public  Task<ServiceResult<LoginResponse>>RefreshAllTokens(RefreshRequest request);
          public Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto);
 }
 

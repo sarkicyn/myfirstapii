@@ -138,12 +138,12 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
 }); 
  }
 
-   public async Task<ServiceResult<string>> RefreshJwtAsync(RefreshRequest request){
+   public async Task<ServiceResult<LoginResponse>> RefreshAllTokens(RefreshRequest request){
  var refToken =  request.RefreshToken;
 
        if (string.IsNullOrWhiteSpace(refToken))
 {
-     return ServiceResult<string>.Fail("Токен отсутствует.", StatusCodes.Status400BadRequest);
+     return ServiceResult<LoginResponse>.Fail("Токен отсутствует.", StatusCodes.Status400BadRequest);
     
 }
 
@@ -157,23 +157,35 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
             x.RefreshTokenHash == refToken);
        if (userTrue is null)
 {
-     return ServiceResult<string>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
+     return ServiceResult<LoginResponse>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
    
 }
 
 if (userTrue.RefreshTokenExpiresAt <= DateTime.UtcNow)
 {
-     return ServiceResult<string>.Fail("Срок действия токена истек. Выполните вход заново.", StatusCodes.Status401Unauthorized);
+     return ServiceResult<LoginResponse>.Fail("Срок действия токена истек. Выполните вход заново.", StatusCodes.Status401Unauthorized);
     
     
 }if(userTrue.Role=="Admin"){
 var jwtAdmin  = await _jwt.GenerateAdminTokenAsync(userTrue);
-await _action.AddActionAsync(userTrue, "обновление jwt токена");
-return ServiceResult<string>.Ok(jwtAdmin);}
+var (Refresh,Hash)  = _fresh.GenerateRefreshToken();
+await _fresh.SaveRefreshTokenAsync(userTrue,Hash); 
+await _action.AddActionAsync(userTrue, "обновление  токенов");
+return ServiceResult<LoginResponse>.Ok(new LoginResponse
+{
+    Jwt = jwtAdmin,
+    RefreshToken = Refresh
+});}
 
 var jwt  = await _jwt.GenerateUserTokenAsync(userTrue);
-await _action.AddActionAsync(userTrue, "обновление jwt токена");
-return ServiceResult<string>.Ok(jwt);
+var (refresh,hash) = _fresh.GenerateRefreshToken();
+ await _fresh.SaveRefreshTokenAsync(userTrue,hash);
+await _action.AddActionAsync(userTrue, "обновление токенов");
+return ServiceResult<LoginResponse>.Ok(new LoginResponse
+{
+    Jwt = jwt,
+    RefreshToken = refresh
+});
    }
 
     public async Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto)
