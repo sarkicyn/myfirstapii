@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 public  class ServiceResult<T>
 {
     public bool Success { get; set; }
@@ -5,6 +7,7 @@ public  class ServiceResult<T>
     public T? Data { get; set; }
 
     public string? Error { get; set; }  
+    public int StatusCode { get; set;}
 
     public static ServiceResult<T> Ok(T data)
     {
@@ -13,17 +16,19 @@ public  class ServiceResult<T>
         return new ServiceResult<T>
         {
             Success = true,
-            Data = data
+            Data = data,
+            StatusCode = StatusCodes.Status200OK
             
         };
     }
 
-    public static ServiceResult<T> Fail(string error)
+    public static ServiceResult<T> Fail(string error, int statusCode = StatusCodes.Status400BadRequest)
     {
         return new ServiceResult<T>
         {
             Success = false,
-            Error = error
+            Error = error,
+            StatusCode = statusCode
             
         };
     }

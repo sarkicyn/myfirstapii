@@ -97,6 +97,7 @@ if (!_cache.TryGetValue(hasheKey, out List<UserHistoryDto>? newActions)){
 var  actions = await _context.UserActionHistories
     .AsNoTracking()
     .Where(x => x.users_id == currentUser.Data!.Id)
+    .OrderBy(x=>x)
     .Select(x => new  UserHistoryDto
     {
         action = x.UserAction != null ? x.UserAction.Action : null,
@@ -116,7 +117,7 @@ var  actions = await _context.UserActionHistories
         {
             return Ok(newActions);
         }
-        return Unauthorized();
+        return Ok(new List<UserHistoryDto>());
 }
 }
 

@@ -14,7 +14,7 @@ public class JwtService : IJwtTokenService
     {
         secretKey = configuration["JWT_KEY"]
             ?? configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+            ?? throw new InvalidOperationException("Jwt:Key не настроен.");
     }
 
     public async Task<string> GenerateUserTokenAsync(User user)

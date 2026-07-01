@@ -37,16 +37,16 @@ private readonly IGitHubUserService _git;
     }
 
   public async Task<ServiceResult<LoginResponse>> HandleGoogleCallback(){
-    var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("Sexcheme");
+    var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("sexScheme");
 if(!authResult.Succeeded||authResult.Principal is null)
         {
-            return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через Google.");
+            return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через Google.", StatusCodes.Status401Unauthorized);
         }
    var result = await _google.FindOrCreateGoogleUserAsync(authResult.Principal);
 if (result.IsBlocked)
         {
 
-            return ServiceResult<LoginResponse>.Fail("account_blocked");
+            return ServiceResult<LoginResponse>.Fail("Действие запрещено: ваш аккаунт заблокирован.", StatusCodes.Status403Forbidden);
         }
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
@@ -59,23 +59,23 @@ await _fresh.SaveRefreshTokenAsync(result,hash);
         await _context.SaveChangesAsync();
         RemoveUserCache(result.Id);
 await _action.AddActionAsync(result, "вход через google");
-await _httpContextAccessor.HttpContext!.SignOutAsync("Sexcheme");
+await _httpContextAccessor.HttpContext!.SignOutAsync("sexScheme");
        
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{
         RefreshToken = refreshToken,
        Jwt =  jwt});
 }
   public async Task<ServiceResult<LoginResponse>> HandleGitHubCallback(){
-  var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("Sexcheme");
+  var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("sexScheme");
 if(!authResult.Succeeded||authResult.Principal is null)
         {
-            return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через GitHub.");
+            return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через GitHub.", StatusCodes.Status401Unauthorized);
         }
    var result = await _git.FindOrCreateGitHubUserAsync(authResult.Principal);
 if (result.IsBlocked)
         {
             
-            return ServiceResult<LoginResponse>.Fail("account_blocked");
+            return ServiceResult<LoginResponse>.Fail("Действие запрещено: ваш аккаунт заблокирован.", StatusCodes.Status403Forbidden);
         }
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
@@ -88,7 +88,7 @@ await _fresh.SaveRefreshTokenAsync(result,hash);
         await _context.SaveChangesAsync();
         RemoveUserCache(result.Id);
 await _action.AddActionAsync(result, "вход через github");
-await _httpContextAccessor.HttpContext!.SignOutAsync("Sexcheme");
+await _httpContextAccessor.HttpContext!.SignOutAsync("sexScheme");
        
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{
         RefreshToken = refreshToken,

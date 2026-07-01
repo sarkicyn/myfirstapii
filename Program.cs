@@ -100,19 +100,19 @@ builder.Services
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddCookie("Sexcheme")
+    .AddCookie("sexScheme")
 .AddGoogle(options =>
     {
-        options.SignInScheme = "cheme";
+        options.SignInScheme = "sexScheme";
         options.ClientId = builder.Configuration[$"Authentication:Google:ClientId"]
             ?? throw new InvalidOperationException("Google ClientId не настроен.");
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]
             ?? throw new InvalidOperationException("Google ClientSecret не настроен.");
             options.CallbackPath = "/google-path";
     })
-    .AddGitHub(options =>
+.AddGitHub(options =>
     {
-        options.SignInScheme = "cheme";
+        options.SignInScheme = "sexScheme";
         options.ClientId = builder.Configuration["Authentication:GitHub:ClientId"]
             ?? throw new InvalidOperationException("GitHub ClientId не настроен.");
         options.ClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"]
@@ -123,7 +123,7 @@ builder.Services
     {
         var secretKey = builder.Configuration["JWT_KEY"]
             ?? builder.Configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+            ?? throw new InvalidOperationException("Jwt:Key не настроен.");
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -271,5 +271,3 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 app.MapControllers();
 
 app.Run();
-
-

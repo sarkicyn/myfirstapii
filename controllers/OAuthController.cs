@@ -48,14 +48,17 @@ public async Task<IActionResult> GoogleCallback()
     var result = await _oauth.HandleGoogleCallback();
         if (!result.Success)
         {
-            if (result.Error == "account_blocked")
+            if (result.StatusCode == StatusCodes.Status403Forbidden)
             {
-                _logger.LogWarning("OAuth Google callback rejected: user account is blocked.");
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+                _logger.LogWarning("OAuth Google отклонен: аккаунт пользователя заблокирован.");
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = result.Error });
             }
 
-            _logger.LogWarning("OAuth Google callback failed. Error: {Error}", result.Error);
-            return BadRequest(new { message = result.Error ?? "Не удалось выполнить аутентификацию." });
+            _logger.LogWarning("OAuth Google завершился ошибкой. Ошибка: {Error}", result.Error);
+            var message = result.Error ?? "Не удалось выполнить аутентификацию.";
+            return result.StatusCode == StatusCodes.Status400BadRequest
+                ? BadRequest(new { message })
+                : StatusCode(result.StatusCode, new { message });
         }
 
 
@@ -89,14 +92,17 @@ public async Task<IActionResult> GithubCallback()
     var result = await _oauth.HandleGitHubCallback();
     if (!result.Success)
         {
-            if (result.Error == "account_blocked")
+            if (result.StatusCode == StatusCodes.Status403Forbidden)
             {
-                _logger.LogWarning("OAuth GitHub callback rejected: user account is blocked.");
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+                _logger.LogWarning("OAuth GitHub отклонен: аккаунт пользователя заблокирован.");
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = result.Error });
             }
 
-            _logger.LogWarning("OAuth GitHub callback failed. Error: {Error}", result.Error);
-            return BadRequest(new { message = result.Error ?? "Не удалось выполнить аутентификацию." });
+            _logger.LogWarning("OAuth GitHub завершился ошибкой. Ошибка: {Error}", result.Error);
+            var message = result.Error ?? "Не удалось выполнить аутентификацию.";
+            return result.StatusCode == StatusCodes.Status400BadRequest
+                ? BadRequest(new { message })
+                : StatusCode(result.StatusCode, new { message });
         }
  return Redirect(BuildAuthCompleteRedirect(result.Data!));
 }
@@ -112,7 +118,7 @@ public IActionResult AuthComplete()
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Authentication complete</title>
+    <title>Аутентификация завершена</title>
     <style>
         body {
             margin: 0;
@@ -158,16 +164,16 @@ public IActionResult AuthComplete()
 </head>
 <body>
     <main>
-        <h1>Authentication complete</h1>
+        <h1>Аутентификация завершена</h1>
         <p id="status"></p>
 
         <label for="jwt">JWT</label>
         <textarea id="jwt" readonly></textarea>
-        <button type="button" data-copy="jwt">Copy JWT</button>
+        <button type="button" data-copy="jwt">Скопировать JWT</button>
 
-        <label for="refresh">Refresh token</label>
+        <label for="refresh">Refresh-токен</label>
         <textarea id="refresh" readonly></textarea>
-        <button type="button" data-copy="refresh">Copy refresh</button>
+        <button type="button" data-copy="refresh">Скопировать refresh</button>
     </main>
 
     <script>
@@ -192,8 +198,8 @@ public IActionResult AuthComplete()
 
         const status = document.getElementById("status");
         status.textContent = jwt && refresh
-            ? "Tokens are available for this browser tab."
-            : "No authentication data found. Start Google login again.";
+            ? "Токены доступны в этой вкладке браузера."
+            : "Данные аутентификации не найдены. Начните вход через Google заново.";
         status.className = jwt && refresh ? "" : "error";
 
         document.querySelectorAll("[data-copy]").forEach((button) => {
@@ -206,7 +212,7 @@ public IActionResult AuthComplete()
                 }
 
                 await navigator.clipboard.writeText(value);
-                button.textContent = "Copied";
+                button.textContent = "Скопировано";
             });
         });
     </script>
@@ -217,5 +223,3 @@ public IActionResult AuthComplete()
     return Content(html, "text/html; charset=utf-8");
 }
 }
-
-

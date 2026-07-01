@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
 using System.Security.Claims;
@@ -33,7 +34,7 @@ public class UserService : IUserService
 
         if (_cache.TryGetValue(notFoundCacheKey, out bool _))
         {
-            return ServiceResult<User>.Fail("Пользователь не найден.");
+            return ServiceResult<User>.Fail("Пользователь не найден.", StatusCodes.Status404NotFound);
         }
 
         if (!_cache.TryGetValue(cacheKey, out User? user))
@@ -45,7 +46,7 @@ public class UserService : IUserService
             if (user == null)
             {
                 _cache.Set(notFoundCacheKey, true, TimeSpan.FromSeconds(15));
-                return ServiceResult<User>.Fail("Пользователь не найден.");
+                return ServiceResult<User>.Fail("Пользователь не найден.", StatusCodes.Status404NotFound);
             }
 
 
@@ -72,13 +73,13 @@ public class UserService : IUserService
         if (string.IsNullOrWhiteSpace(currentUserId))
         {
             _logger.LogWarning("Идентификатор текущего пользователя не найден в утверждениях.");
-            return ServiceResult<User?>.Fail("Пользователь не найден.");
+            return ServiceResult<User?>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
         }
 
         if (!int.TryParse(currentUserId, out var userId))
         {
             _logger.LogWarning("Идентификатор текущего пользователя в утверждениях имеет неверный формат. Идентификатор текущего пользователя: {CurrentUserId}", currentUserId);
-            return ServiceResult<User?>.Fail("Пользователь не найден.");
+            return ServiceResult<User?>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
             
         }
 
@@ -87,7 +88,7 @@ public class UserService : IUserService
 
 if (_cache.TryGetValue(notFoundCacheKey, out bool _))
 {
-    return ServiceResult<User?>.Fail("Пользователь не найден.");
+    return ServiceResult<User?>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
 }
 
 if (!_cache.TryGetValue(cacheKey, out User? currentUser))
@@ -110,24 +111,33 @@ if (currentUser != null)
         
 
         _logger.LogWarning("Текущий пользователь не найден в базе данных. Идентификатор пользователя у провайдера: {ProviderUserId}", currentUserId);
-          return  ServiceResult<User?>.Fail("Пользователь не найден.");
+          return  ServiceResult<User?>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
         
     }
 
-  public async Task<ServiceResult<List<User>>> GetAllUsersAsync(){
-       
+  public async Task<ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pags){
+       var pageSize = 10;
            
            var users = await _context.Users
                .AsNoTracking()
+               .OrderBy(x=>x.Id)
+               .Skip((pags.Page- 1)*pageSize)
+               .Take(pageSize)
                .ToListAsync();
-        
+        var countUsers =  await _context.Users.AsNoTracking().CountAsync();
        
             if (users == null)
             {
-                ServiceResult<List<User>>.Fail("Список пользователей не найден.");
+                return ServiceResult<PaginationReult>.Fail("Список пользователей не найден.", StatusCodes.Status404NotFound);
             }
 
-               return  ServiceResult<List<User>>.Ok(users!);
+            return ServiceResult<PaginationReult>.Ok(new PaginationReult
+            {
+                users = users,
+                Page = pags.Page,
+                PageSize = pageSize,
+                TotalCount = countUsers
+            });
         
   }
 
@@ -136,7 +146,7 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
  var currentUser = await GetCurrentUserAsync(user);
         if (currentUser.Data == null)
         {
-            return ServiceResult<CurrentUserProfileDto>.Fail("Пользователь не найден.");
+            return ServiceResult<CurrentUserProfileDto>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
         }
         if (user.Identity?.IsAuthenticated == true)
         {
@@ -151,7 +161,7 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
          };
             return ServiceResult<CurrentUserProfileDto>.Ok(User);
         }
-        return ServiceResult<CurrentUserProfileDto>.Fail("Пользователь не найден."); 
+        return ServiceResult<CurrentUserProfileDto>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized); 
 }
 
 
@@ -161,13 +171,13 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
 
         if (id <= 0)
         {
-     return ServiceResult<string>.Fail("Некорректный id.");
+     return ServiceResult<string>.Fail("Некорректный id.", StatusCodes.Status400BadRequest);
             
         }
 
         if (string.IsNullOrWhiteSpace(name)||name==null)
         {
-     return ServiceResult<string>.Fail("Некорректное имя.");
+     return ServiceResult<string>.Fail("Некорректное имя.", StatusCodes.Status400BadRequest);
             
         }
 
@@ -175,14 +185,14 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
             .AsNoTracking()
             .AnyAsync(user => user.Id != id && user.Login == name))
         {
-     return ServiceResult<string>.Fail("Логин уже занят.");
+     return ServiceResult<string>.Fail("Логин уже занят.", StatusCodes.Status409Conflict);
             
         }
 
         var userToRename = await _context.Users.FirstOrDefaultAsync(item => item.Id == id);
         if (userToRename == null)
         {
-            return ServiceResult<string>.Fail("Пользователь не найден.");
+            return ServiceResult<string>.Fail("Пользователь не найден.", StatusCodes.Status404NotFound);
         }
 
         userToRename.Login = name;
@@ -193,4 +203,3 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
 return ServiceResult<string>.Ok($"вы сменили имя на {name}");
  }
 }
-

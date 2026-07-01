@@ -26,7 +26,7 @@ public class GitHubUserService : IGitHubUserService
 
         if (string.IsNullOrWhiteSpace(githubId))
         {
-            _logger.LogWarning("GitHub authentication failed: provider user id is missing.");
+            _logger.LogWarning("Аутентификация GitHub не выполнена: отсутствует идентификатор пользователя у провайдера.");
             throw new Exception("Идентификатор пользователя GitHub не найден.");
         }
 

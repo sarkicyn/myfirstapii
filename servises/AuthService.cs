@@ -39,23 +39,23 @@ private readonly IPasswordHashService _hashpass;
      public async Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO){
     if (dTO is null)
             {
-     return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.");
+     return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.", StatusCodes.Status400BadRequest);
             }
 
             if (string.IsNullOrWhiteSpace(dTO.Login) || string.IsNullOrWhiteSpace(dTO.password))
             {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
                    
             }
             if (dTO.Login.Length <= 3 || dTO.password.Length <= 3)
         {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
             
         }
 bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
         if (regg)
         {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
             
         }
 
@@ -63,10 +63,10 @@ var (refreshToken, hash) = _fresh.GenerateRefreshToken();
 _logger.LogInformation("Сгенерирован refresh token для входа пользователя."); 
 var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
 if(us==null){ 
-     return ServiceResult<LoginResponse>.Fail("неверный логин.");
+     return ServiceResult<LoginResponse>.Fail("Неверный логин.", StatusCodes.Status401Unauthorized);
 }
 if(!BCrypt.Net.BCrypt.Verify(dTO.password, us.Password)){
-     return ServiceResult<LoginResponse>.Fail("неверный пароль.");
+     return ServiceResult<LoginResponse>.Fail("Неверный пароль.", StatusCodes.Status401Unauthorized);
 }
 await _fresh.SaveRefreshTokenAsync(us,hash);
         await _context.SaveChangesAsync();
@@ -86,23 +86,23 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
      public async Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO){
     if (dTO is null)
             {
-     return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.");
+     return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.", StatusCodes.Status400BadRequest);
             }
 
             if (string.IsNullOrWhiteSpace(dTO.Login) || string.IsNullOrWhiteSpace(dTO.password))
             {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
                    
             }
             if (dTO.Login.Length <= 3 || dTO.password.Length <= 3)
         {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
             
         }
 bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
         if (regg)
         {
-     return ServiceResult<LoginResponse>.Fail("Некорректные данные.");
+     return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
             
         }
 
@@ -110,7 +110,7 @@ var us = await _context.Users
     .AsNoTracking()
     .FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
 if(us!=null){ 
-     return ServiceResult<LoginResponse>.Fail("Логин уже занят.");
+     return ServiceResult<LoginResponse>.Fail("Логин уже занят.", StatusCodes.Status409Conflict);
 }
 var (refreshToken, hash) = _fresh.GenerateRefreshToken();
 _logger.LogInformation("Сгенерирован refresh token для регистрации пользователя."); 
@@ -143,7 +143,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
 
        if (string.IsNullOrWhiteSpace(refToken))
 {
-     return ServiceResult<string>.Fail("Токен отсутствует.");
+     return ServiceResult<string>.Fail("Токен отсутствует.", StatusCodes.Status400BadRequest);
     
 }
 
@@ -157,13 +157,13 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
             x.RefreshTokenHash == refToken);
        if (userTrue is null)
 {
-     return ServiceResult<string>.Fail("Пользователь не найден.");
+     return ServiceResult<string>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
    
 }
 
 if (userTrue.RefreshTokenExpiresAt <= DateTime.UtcNow)
 {
-     return ServiceResult<string>.Fail("Срок действия токена истек. Выполните вход заново.");
+     return ServiceResult<string>.Fail("Срок действия токена истек. Выполните вход заново.", StatusCodes.Status401Unauthorized);
     
     
 }if(userTrue.Role=="Admin"){
@@ -180,7 +180,7 @@ return ServiceResult<string>.Ok(jwt);
     {
         if (dto is null)
         {
-            return ServiceResult<LoginResponse>.Fail("Invalid data.");
+            return ServiceResult<LoginResponse>.Fail("Некорректные данные.", StatusCodes.Status400BadRequest);
         }
 
           var adminLogin = _conf["ADMIN_LOGIN"];
@@ -188,7 +188,7 @@ var adminPasswordHash = _conf["ADMIN_PASSWORD_HASH"];
 if (string.IsNullOrWhiteSpace(adminLogin) ||
     string.IsNullOrWhiteSpace(adminPasswordHash))
 {
-    return ServiceResult<LoginResponse>.Fail("Неверные данные.");
+    return ServiceResult<LoginResponse>.Fail("Неверные данные.", StatusCodes.Status500InternalServerError);
 }
 
         if (dto.Login == adminLogin &&  BCrypt.Net.BCrypt.Verify(dto.password, adminPasswordHash))
@@ -217,6 +217,6 @@ if (string.IsNullOrWhiteSpace(adminLogin) ||
               RemoveUserCache(user.Id);
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{RefreshToken =refreshToken,Jwt = jwt});
         }
-    return ServiceResult<LoginResponse>.Fail("Неверные данные.");
+    return ServiceResult<LoginResponse>.Fail("Неверные данные.", StatusCodes.Status401Unauthorized);
     }
 }

@@ -2,6 +2,7 @@ using MyApiBlya.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
+using Microsoft.VisualBasic;
 public class BackgroundLoggingService : BackgroundService
 {
      private readonly   ILogger<BackgroundLoggingService>_logg; 
@@ -20,10 +21,10 @@ await Task.Delay(100000,stoppingToken);
     private  async Task RemoeOldActions(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
-        {var scope = _scope.CreateAsyncScope();
+        {await using var  scope = _scope.CreateAsyncScope();
         var border = DateTime.UtcNow.AddDays(-1);
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var UserHistories = await db.UserActionHistories.ToListAsync();
+        var UserHistories = await db.UserActionHistories.Where(x=>x.CreatedAt< border).ToListAsync();
             foreach(var item in UserHistories)
             {
                 if (item.CreatedAt < border)
@@ -31,8 +32,8 @@ await Task.Delay(100000,stoppingToken);
                     db.UserActionHistories.RemoveRange(item);
                 }
             }
-            await Task.Delay(100,cancellationToken:stoppingToken);
             await db.SaveChangesAsync();
+            await Task.Delay(100,cancellationToken:stoppingToken);
         }
     }
 }

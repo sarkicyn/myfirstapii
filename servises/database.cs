@@ -45,6 +45,7 @@ public class AppDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("id");
             entity.Property(x => x.Permission).HasColumnName("permission");
+            entity.HasIndex(x=>x.Permission);
         });
         modelBuilder.Entity<UserPermission>(entity =>
 {
@@ -63,6 +64,7 @@ public class AppDbContext : DbContext
             entity.HasKey(x=>x.Id);
             entity.Property(x=>x.Id).HasColumnName("Id"); 
             entity.Property(x=>x.Action).HasColumnName("action"); 
+            entity.HasIndex(x=>x.Action);
         });
         modelBuilder.Entity<UserActionHistory>(entity =>
         {

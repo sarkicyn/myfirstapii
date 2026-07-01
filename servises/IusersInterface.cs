@@ -15,6 +15,14 @@ public  List<string>actions = new List<string>();
        
 };
 }
+public class PaginationParams()
+{
+    public int Page {get;set;} = 1 ; 
+
+
+
+}
+
 public class LoginResponse
 {
     public string Jwt { get; set; } = string.Empty;
@@ -53,7 +61,7 @@ public interface IUserService
 {
      public  Task< ServiceResult<User>> GetUserByIdAsync(int id);
      public  Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user);
-     public  Task <ServiceResult<List<User>>> GetAllUsersAsync();
+     public  Task <ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pagination);
        public  Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user);
         public  Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user);
 }

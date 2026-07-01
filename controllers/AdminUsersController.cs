@@ -83,7 +83,7 @@ public class AdminUsersController : ControllerBase
 
 [Authorize(Roles = "Admin")]
     [HttpGet("all")]
-    public async Task<IActionResult> GetUsers()
+    public async Task<IActionResult> GetUsers([FromQuery]PaginationParams pagination)
     {
         _logger.LogInformation("Запрос списка пользователей начат.");
 
@@ -99,13 +99,12 @@ public class AdminUsersController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
         }
 
-        var users =  await _users.GetAllUsersAsync();
+        var users =  await _users.GetAllUsersAsync( pagination);
 
         await _action.AddActionAsync(currentUser.Data!, "получить всех пользователей");
-            await _context.SaveChangesAsync();
 
 
-        _logger.LogInformation("Запрос списка пользователей завершен. Идентификатор текущего пользователя: {CurrentUserId}, количество пользователей: {UsersCount}", currentUser.Data!.Id, users?.Data?.Count ?? 0);
+        _logger.LogInformation("Запрос списка пользователей завершен. Идентификатор текущего пользователя: {CurrentUserId}, количество пользователей: {UsersCount}", currentUser.Data!.Id, users?.Data?.TotalCount ?? 0);
         return Ok(users!.Data);
     }
 

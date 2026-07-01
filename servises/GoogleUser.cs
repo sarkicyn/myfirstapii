@@ -20,7 +20,7 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
 
     if (string.IsNullOrWhiteSpace(providerId))
     {
-        _logger.LogWarning("Google authentication failed: provider user id is missing.");
+        _logger.LogWarning("Аутентификация Google не выполнена: отсутствует идентификатор пользователя у провайдера.");
         throw new Exception("Идентификатор пользователя Google не найден.");
     }
 

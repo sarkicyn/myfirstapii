@@ -1,6 +1,7 @@
 namespace MyApiBlya.Tests;
 
 using AspNet.Security.OAuth.GitHub;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -68,7 +69,9 @@ public class OAuthControllerTests
         var loger = new Mock<ILogger<OAuthController>>();
 
         auth.Setup(x => x.HandleGoogleCallback())
-            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("account_blocked"));
+            .ReturnsAsync(ServiceResult<LoginResponse>.Fail(
+                "Действие запрещено: ваш аккаунт заблокирован.",
+                StatusCodes.Status403Forbidden));
 
         var controller = new OAuthController(auth.Object, loger.Object);
 
@@ -119,7 +122,9 @@ public class OAuthControllerTests
         var loger = new Mock<ILogger<OAuthController>>();
 
         auth.Setup(x => x.HandleGitHubCallback())
-            .ReturnsAsync(ServiceResult<LoginResponse>.Fail("account_blocked"));
+            .ReturnsAsync(ServiceResult<LoginResponse>.Fail(
+                "Действие запрещено: ваш аккаунт заблокирован.",
+                StatusCodes.Status403Forbidden));
 
         var controller = new OAuthController(auth.Object, loger.Object);
 

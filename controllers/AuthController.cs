@@ -135,7 +135,7 @@ return Ok(result.Data);
 
 
         _logger.LogInformation("Запрос выхода из аккаунта завершен. Идентификатор текущего пользователя: {CurrentUserId}", currentUser.Data!.Id);
-        return Ok(new { Message = "Logged out" });
+        return Ok(new { Message = "Вы вышли из аккаунта." });
     }
 
     [AllowAnonymous]
@@ -149,4 +149,3 @@ return Ok(result.Data);
  return ServiceResultMapper.ToActionResult(this,admin);
     }
 }
-
