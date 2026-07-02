@@ -69,7 +69,7 @@ public class CurrentUserTest()
                 IsBlocked = true
             }));
 
-        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
+        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
         var result = await controller.RenameUserAsync("newName");
 
@@ -95,7 +95,7 @@ public class CurrentUserTest()
         users.Setup(x => x.RenameUserAsync(1, "newName", It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(ServiceResult<string>.Fail("ошибка"));
 
-        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
+        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
         var result = await controller.RenameUserAsync("newName");
 
@@ -112,7 +112,7 @@ public class CurrentUserTest()
         users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized));
 
-        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
+        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
         var result = await controller.GetHistory();
 
@@ -129,7 +129,7 @@ public class CurrentUserTest()
         users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden));
 
-        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
+        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
         var result = await controller.GetHistory();
 
@@ -154,7 +154,7 @@ public class CurrentUserTest()
                 }
             }));
 
-        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache);
+        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
         var result = await controller.GetHistory();
 
@@ -163,4 +163,3 @@ public class CurrentUserTest()
         Assert.Equal("тестовое действие", historyResult[0].action);
     }
 }
-

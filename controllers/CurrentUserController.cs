@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
 
 [ApiController]
@@ -12,20 +10,15 @@ public class CurrentUserController : ControllerBase
     private readonly ILogger<CurrentUserController> _logger;
     private readonly IUserActionService _action;
     private readonly AppDbContext _context;
-    private readonly IMemoryCache _cache;
 
     public CurrentUserController(IUserActionService action,ILogger<CurrentUserController> logger,
-    IUserService users, AppDbContext context,IMemoryCache cache
+    IUserService users, AppDbContext context
     )
     {
         _context = context;
       _logger = logger;
       _users = users;
       _action = action;
-      _cache= cache;
-
-
-
     }
 
 
