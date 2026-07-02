@@ -35,6 +35,7 @@ public class AdminUsersController : ControllerBase
 
 
 [Authorize(Roles = "Admin")]
+    [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("{id:int:min(1):max(100)}")]
     public async Task<IActionResult> GetUserById(int id)
     {
@@ -82,6 +83,7 @@ public class AdminUsersController : ControllerBase
     }
 
 [Authorize(Roles = "Admin")]
+    [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("all")]
     public async Task<IActionResult> GetUsers([FromQuery]PaginationParams pagination)
     {
@@ -109,6 +111,7 @@ public class AdminUsersController : ControllerBase
     }
 
 [Authorize(Roles = "Admin")]
+[ServiceFilter(typeof(ActiveUserFilter))]
 [HttpDelete("deleteUser")]
 public async Task<IActionResult> DeleteUser(int Id)
     {
@@ -139,6 +142,7 @@ public async Task<IActionResult> DeleteUser(int Id)
     }
 
     [Authorize(Roles = "Admin")]
+    [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("blockUser")]
     public async Task<IActionResult>BlockUser(int id)
     {
@@ -170,6 +174,7 @@ public async Task<IActionResult> DeleteUser(int Id)
     }
 
     [Authorize(Roles = "Admin")]
+    [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("UnblockUser")]
     public async Task<IActionResult>UnblockUser(int id)
     {
@@ -198,5 +203,4 @@ public async Task<IActionResult> DeleteUser(int Id)
         return NotFound(new{message ="Пользователь не найден."});
     }
 }
-
 

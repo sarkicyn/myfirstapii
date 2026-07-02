@@ -4,6 +4,7 @@ using MyApiBlya.Services;
 
 [ApiController]
 [Route("api/users")]
+[ServiceFilter(typeof(ActiveUserFilter))]
 public class CurrentUserController : ControllerBase
 {
     private readonly IUserService _users;

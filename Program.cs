@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using AspNet.Security.OAuth.GitHub;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 
 
@@ -80,7 +81,7 @@ builder.Services.AddHostedService<BackgroundLoggingService>();
 builder.Services.AddScoped<IRefreshTokenService,RefreshTokenService>();
 builder.Services.AddScoped<IGoogleUserService,GoogleUserService>(); 
 builder.Services.AddScoped<IGitHubUserService,GitHubUserService>();
-
+builder.Services.AddScoped<ActiveUserFilter>(); 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(
@@ -92,6 +93,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            
     });
 builder.Services
 
