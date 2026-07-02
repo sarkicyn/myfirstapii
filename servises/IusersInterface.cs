@@ -62,6 +62,7 @@ public interface IUserService
      public  Task< ServiceResult<User>> GetUserByIdAsync(int id);
      public  Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user);
      public Task<ServiceResult<string>> LogoutAsync(ClaimsPrincipal user);
+     public Task<ServiceResult<List<UserHistoryDto>>> GetUserHistoryAsync(ClaimsPrincipal user);
      public  Task <ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pagination);
        public  Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user);
         public  Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user);

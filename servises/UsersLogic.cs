@@ -146,6 +146,47 @@ if (currentUser != null)
         return ServiceResult<string>.Ok("Вы вышли из аккаунта.");
     }
 
+    public async Task<ServiceResult<List<UserHistoryDto>>> GetUserHistoryAsync(ClaimsPrincipal user)
+    {
+        var currentUser = await GetCurrentUserAsync(user);
+        if (!currentUser.Success || currentUser.Data is null)
+        {
+            return ServiceResult<List<UserHistoryDto>>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized);
+        }
+
+        if (currentUser.Data.IsBlocked)
+        {
+            _logger.LogWarning("Получение истории запрещено: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
+            return ServiceResult<List<UserHistoryDto>>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden);
+        }
+
+        var cacheKey = CacheKeys.UserHistory(currentUser.Data.Id);
+        if (!_cache.TryGetValue(cacheKey, out List<UserHistoryDto>? actions))
+        {
+            var moscowZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+            var histories = await _context.UserActionHistories
+                .AsNoTracking()
+                .Where(x => x.users_id == currentUser.Data.Id)
+                .OrderBy(x => x.CreatedAt)
+                .Select(x => new UserHistoryDto
+                {
+                    action = x.UserAction != null ? x.UserAction.Action : null,
+                    time = x.CreatedAt
+                })
+                .ToListAsync();
+
+            actions = histories.Select(x => new UserHistoryDto
+            {
+                action = x.action,
+                time = TimeZoneInfo.ConvertTimeFromUtc(x.time, moscowZone)
+            }).ToList();
+
+            _cache.Set(cacheKey, actions, TimeSpan.FromSeconds(100));
+        }
+
+        return ServiceResult<List<UserHistoryDto>>.Ok(actions ?? new List<UserHistoryDto>());
+    }
+
   public async Task<ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pags){
        var pageSize = 10;
            

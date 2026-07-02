@@ -80,44 +80,11 @@ await _context.SaveChangesAsync();
     [HttpGet("history")]
    public async Task<IActionResult> GetHistory()
 {
-    var currentUser =
-        await _users.GetCurrentUserAsync(User);
-    if (!currentUser.Success || currentUser.Data is null)
-    {
-        return Unauthorized();
-    }
-        if (currentUser.Data is not null && currentUser.Data.IsBlocked)
+        var result = await _users.GetUserHistoryAsync(User);
+        if (result.Success)
         {
-            _logger.LogWarning("Получение истории запрещено: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
-        }
-        var hasheKey = CacheKeys.UserHistory(currentUser.Data!.Id);
-if (!_cache.TryGetValue(hasheKey, out List<UserHistoryDto>? newActions)){
-        var moscowZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-var  actions = await _context.UserActionHistories
-    .AsNoTracking()
-    .Where(x => x.users_id == currentUser.Data!.Id)
-    .OrderBy(x=>x)
-    .Select(x => new  UserHistoryDto
-    {
-        action = x.UserAction != null ? x.UserAction.Action : null,
-        time = x.CreatedAt
-
-    })
-    .ToListAsync();
-    newActions=actions.Select(x=>new UserHistoryDto
-    {
-        action =x.action,
-        time = TimeZoneInfo.ConvertTimeFromUtc(
-            x.time,
-            moscowZone)
-    }).ToList();
-    _cache.Set(hasheKey,actions,TimeSpan.FromSeconds(100));}
-        if (newActions != null)
-        {
-            return Ok(newActions);
-        }
-        return Ok(new List<UserHistoryDto>());
+            return Ok(result.Data ?? new List<UserHistoryDto>());
+        }   
+        return ServiceResultMapper.ToActionResult(this, result);
 }
 }
-

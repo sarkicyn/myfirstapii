@@ -1,6 +1,7 @@
 ﻿namespace MyApiBlya.Tests;
 using MyApiBlya.Tests;
 using Moq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,6 @@ using MyApiBlya.Services;
 using System.Security.Claims;
 using System.Globalization;
 using System.Net.Http.Headers;
-using Microsoft.EntityFrameworkCore;
 
 public class CurrentUserTest()
 {
@@ -109,8 +109,8 @@ public class CurrentUserTest()
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
+        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -126,13 +126,8 @@ public class CurrentUserTest()
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Ok(new User
-            {
-                Id = 1,
-                Login = "user",
-                IsBlocked = true
-            }));
+        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
@@ -149,37 +144,17 @@ public class CurrentUserTest()
         var cache = new MemoryCache(new MemoryCacheOptions());
         var users = new Mock<IUserService>();
 
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
+        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Ok(new List<UserHistoryDto>
+            {
+                new UserHistoryDto
+                {
+                    action = "тестовое действие",
+                    time = DateTime.UtcNow
+                }
+            }));
 
-        var context = new AppDbContext(options);
-        var user = new User
-        {
-            Id = 1,
-            Login = "user",
-            IsBlocked = false
-        };
-        var UserAction = new UserAction
-        {
-            Id = 1,
-            Action = "тестовое действие"
-        };
-
-        context.Users.Add(user);
-        context.UserActions.Add(UserAction);
-        context.UserActionHistories.Add(new UserActionHistory
-        {
-            users_id = user.Id,
-            actions_id = UserAction.Id,
-            CreatedAt = DateTime.UtcNow
-        });
-        await context.SaveChangesAsync();
-
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(ServiceResult<User?>.Ok(user));
-
-        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, context, cache);
+        var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!, cache);
 
         var result = await controller.GetHistory();
 
@@ -188,6 +163,4 @@ public class CurrentUserTest()
         Assert.Equal("тестовое действие", historyResult[0].action);
     }
 }
-
-
 
