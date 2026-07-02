@@ -7,12 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MyApiBlya.Services;
 using System.Text;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using AspNet.Security.OAuth.GitHub;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 
 
@@ -261,7 +259,7 @@ if (app.Environment.IsProduction())
 {
     app.UseHsts();
 }
- 
+ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();

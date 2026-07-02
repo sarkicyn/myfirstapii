@@ -77,6 +77,7 @@ return Ok(result.Data);
     }
 
 [Authorize]
+    [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {

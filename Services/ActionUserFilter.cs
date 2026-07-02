@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using MyApiBlya.Services; 
-public sealed class ActiveUserFilter : IAsyncActionFilter
+public  class ActiveUserFilter : IAsyncActionFilter
 {
     private readonly IUserService _currentUserService;
     private readonly ILogger<ActiveUserFilter> _logger;
@@ -33,10 +33,9 @@ public sealed class ActiveUserFilter : IAsyncActionFilter
                 "Действие запрещено: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}",
                 currentUser.Data.Id);
 
-            context.Result = new ObjectResult(new { message = "Доступ запрещен." })
-            {
-                StatusCode = StatusCodes.Status403Forbidden
-            };
+            var result = new ObjectResult(new{message = "доступ запрещен"});
+            result.StatusCode = StatusCodes.Status403Forbidden; 
+            context.Result = result;
 
             return;
         }
