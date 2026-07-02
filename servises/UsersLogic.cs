@@ -111,8 +111,39 @@ if (currentUser != null)
         
 
         _logger.LogWarning("Текущий пользователь не найден в базе данных. Идентификатор пользователя у провайдера: {ProviderUserId}", currentUserId);
-          return  ServiceResult<User?>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
+       return  ServiceResult<User?>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
         
+    }
+
+    public async Task<ServiceResult<string>> LogoutAsync(ClaimsPrincipal user)
+    {
+        _logger.LogInformation("Запрос выхода из аккаунта начат.");
+
+        var currentUser = await GetCurrentUserAsync(user);
+        if (!currentUser.Success || currentUser.Data is null)
+        {
+            _logger.LogWarning("Выход не выполнен: текущий пользователь не найден.");
+            return ServiceResult<string>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized);
+        }
+
+        if (currentUser.Data.IsBlocked)
+        {
+            _logger.LogWarning("Выход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
+            return ServiceResult<string>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden);
+        }
+
+        var userToLogout = await _context.Users.FirstOrDefaultAsync(x => x.Id == currentUser.Data.Id);
+        if (userToLogout != null)
+        {
+            userToLogout.RefreshTokenHash = null;
+        }
+
+        await _action.AddActionAsync(currentUser.Data, "выход из аккаунта");
+        await _context.SaveChangesAsync();
+        RemoveUserCache(currentUser.Data.Id);
+
+        _logger.LogInformation("Запрос выхода из аккаунта завершен. Идентификатор текущего пользователя: {CurrentUserId}", currentUser.Data.Id);
+        return ServiceResult<string>.Ok("Вы вышли из аккаунта.");
     }
 
   public async Task<ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pags){

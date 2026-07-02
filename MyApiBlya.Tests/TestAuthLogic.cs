@@ -35,7 +35,7 @@ var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
 users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
 var auth = new Mock<IAuthService>();
-var controller = new AuthController(action.Object,logger.Object,users.Object,authServiceMock.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,authServiceMock.Object);
 var result  = await controller.Login(dto);
 Assert.IsType<BadRequestObjectResult>(result); 
 authServiceMock.Verify(x=>x.LoginAsync(dto),Times.Once);
@@ -81,7 +81,7 @@ var cache = new Mock<IMemoryCache>();
 
 
 
-var controller = new AuthController(action.Object,logger.Object,users.Object,auth.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,auth.Object);
 var result = await controller.Login(new LoginDto
 {
     Login = "artem",
@@ -116,7 +116,7 @@ var cache = new Mock<IMemoryCache>();
 
 
 
-var controller = new AuthController(action.Object,logger.Object,users.Object,auth.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,auth.Object);
 var result = await controller.Login(dto);
 var type=Assert.IsType<OkObjectResult>(result);
 var typeV=Assert.IsType<LoginResponse>(type.Value);

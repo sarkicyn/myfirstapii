@@ -26,7 +26,7 @@ public class TestAdminAuth
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        var controller = new AuthController(action.Object, logger.Object, users.Object, auth.Object, null!, cache.Object);
+        var controller = new AuthController(logger.Object, users.Object, auth.Object);
 
         var result = await controller.AuthenticateAdminAsync(dto);
 

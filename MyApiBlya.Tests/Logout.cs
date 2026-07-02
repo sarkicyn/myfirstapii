@@ -1,6 +1,7 @@
 namespace MyApiBlya.Tests;
 using MyApiBlya.Tests;
 using Moq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,9 @@ public class logoutTest
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
-users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
+users.Setup(x=>x.LogoutAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<string>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized));
 
-var controller = new AuthController(action.Object,logger.Object,users.Object,auth.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,auth.Object);
 var result = await controller.Logout();
 Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -38,12 +39,9 @@ Assert.IsType<UnauthorizedObjectResult>(result);
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
-users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Ok(new User
-{
-    IsBlocked = true
-}));
+users.Setup(x=>x.LogoutAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<string>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden));
 
-var controller = new AuthController(action.Object,logger.Object,users.Object,auth.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,auth.Object);
 var result   = await controller.Logout(); 
 var  objectResult= Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, objectResult.StatusCode);

@@ -26,7 +26,7 @@ public class TestRefreshLogic()
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
-var controller = new AuthController(action.Object,logger.Object,users.Object,refreshAuthService.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,refreshAuthService.Object);
 var result = await controller.Refresh(request);
 Assert.IsType<BadRequestObjectResult>(result);
 refreshAuthService.Verify(x=>x.RefreshAllTokens(request),Times.Once);
@@ -58,7 +58,7 @@ refreshAuthService.Verify(x=>x.RefreshAllTokens(request),Times.Once);
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
-var controller = new AuthController(action.Object,logger.Object,users.Object,refreshAuthService.Object,null!,cache.Object);
+var controller = new AuthController(logger.Object,users.Object,refreshAuthService.Object);
 var result = await controller.Refresh(request);
 var type =Assert.IsType<OkObjectResult>(result);
 var typeV = Assert.IsType<string>(type.Value);

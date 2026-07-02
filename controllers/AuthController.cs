@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
 
 [ApiController]
@@ -11,31 +9,14 @@ public class AuthController : ControllerBase
     private readonly IUserService _users;
     private readonly IAuthService _auth;
     private readonly ILogger<AuthController> _logger;
-    private readonly IUserActionService _action;
-    private readonly AppDbContext _context;
-    private readonly IMemoryCache _cache;
 
-    public AuthController(IUserActionService action,ILogger<AuthController> logger,
-    IUserService users, IAuthService auth, AppDbContext context,IMemoryCache cache
+    public AuthController(ILogger<AuthController> logger,
+    IUserService users, IAuthService auth
     )
     {
-        _context = context;
       _logger = logger;
       _users = users;
       _auth = auth;
-      _action = action;
-      _cache = cache;
-
-
-
-    }
-
-    private void RemoveUserCache(int id)
-    {
-        _cache.Remove(CacheKeys.UserById(id));
-        _cache.Remove(CacheKeys.UserNotFound(id));
-        _cache.Remove(CacheKeys.CurrentUserById(id));
-        _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
 
 
@@ -99,43 +80,13 @@ return Ok(result.Data);
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-
-        _logger.LogInformation("Запрос выхода из аккаунта начат.");
-
-        var currentUser = await _users.GetCurrentUserAsync(User);
-        if (!currentUser.Success)
+        var result = await _users.LogoutAsync(User);
+        if (!result.Success)
         {
-            _logger.LogWarning("Выход не выполнен: текущий пользователь не найден.");
-            return Unauthorized(new { message = "Требуется авторизация." });
-        }
-        if (currentUser.Data is not null && currentUser.Data.IsBlocked)
-        {
-            _logger.LogWarning("Выход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Доступ запрещен." });
+            return ServiceResultMapper.ToActionResult(this, result);
         }
 
-
-
-            if(currentUser.Data!=null){
-            var user = await _context.Users.FirstOrDefaultAsync(x=>x.Id==currentUser.Data!.Id);
-            if (user != null)
-            {
-                user.RefreshTokenHash = null;
-
-            }
-
-        }
-
-
-
-
-        await _action.AddActionAsync(currentUser.Data!, "выход из аккаунта");
-        await _context.SaveChangesAsync();
-        RemoveUserCache(currentUser.Data!.Id);
-
-
-        _logger.LogInformation("Запрос выхода из аккаунта завершен. Идентификатор текущего пользователя: {CurrentUserId}", currentUser.Data!.Id);
-        return Ok(new { Message = "Вы вышли из аккаунта." });
+        return Ok(new { Message = result.Data });
     }
 
     [AllowAnonymous]
