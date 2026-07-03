@@ -10,9 +10,40 @@ using MyApiBlya.Services;
 using System.Security.Claims;
 using System.Globalization;
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 
 public class CurrentUserTest()
 {
+    private static async Task<IActionResult> ExecuteWithActiveUserFilterAsync(
+        Mock<IUserService> users,
+        Func<Task<IActionResult>> action)
+    {
+        var filterLogger = new Mock<ILogger<ActiveUserFilter>>();
+        var filter = new ActiveUserFilter(users.Object, filterLogger.Object);
+        var actionContext = new ActionContext(
+            new DefaultHttpContext(),
+            new RouteData(),
+            new ActionDescriptor());
+        var context = new ActionExecutingContext(
+            actionContext,
+            new List<IFilterMetadata>(),
+            new Dictionary<string, object?>(),
+            controller: null!);
+
+        await filter.OnActionExecutionAsync(context, async () =>
+        {
+            var result = await action();
+            return new ActionExecutedContext(actionContext, new List<IFilterMetadata>(), null!)
+            {
+                Result = result
+            };
+        });
+
+        return context.Result!;
+    }
+
     [Fact]
     public async Task UnBlockUser_WhenResult_NotOk()
     {
@@ -26,7 +57,7 @@ public class CurrentUserTest()
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await controller.UnblockUser(1);
+        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.UnblockUser(1));
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -48,7 +79,7 @@ public class CurrentUserTest()
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await controller.UnblockUser(2);
+        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.UnblockUser(2));
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -71,7 +102,7 @@ public class CurrentUserTest()
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await controller.RenameUserAsync("newName");
+        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.RenameUserAsync("newName"));
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -116,7 +147,7 @@ public class CurrentUserTest()
 
         var result = await controller.GetHistory();
 
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task GetHistory_WhenUserBlocked_ReturnsForbidden()

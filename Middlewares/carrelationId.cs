@@ -18,7 +18,7 @@ public  class CorrelationIdMiddleware
     {
         var correlationId = Guid.NewGuid().ToString();
 
-        using (_logger.BeginScope(new Dictionary<string, object>
+        using (_logger.BeginScope(new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         }))

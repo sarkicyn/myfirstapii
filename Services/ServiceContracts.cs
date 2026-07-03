@@ -45,7 +45,7 @@ public interface IUserActionService
 }
 public interface IRefreshTokenService
 {
-     (string RefreshToken, string Hash)GenerateRefreshToken(); 
+     (string RefreshToken, string Hash) GenerateRefreshToken(); 
      Task SaveRefreshTokenAsync(User user, string hash);
      
 }
