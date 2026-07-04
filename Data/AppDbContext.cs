@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.ProviderUserId).HasColumnName("provideruserid");
             entity.HasIndex(x=>x.ProviderUserId).IsUnique();
             entity.Property(x=>x.BlockedUntill).HasColumnName("BlockedUntill");
+            entity.Property(x=>x.Cause).HasColumnName("Cause");
             entity.Property(x => x.CreatedAt).HasColumnName("createdat");
             entity.Property(x => x.IsBlocked).HasColumnName("isblocked").HasDefaultValue(false);
             entity.Property(x => x.RefreshTokenExpiresAt).HasColumnName("refreshTokenExpiresAt");

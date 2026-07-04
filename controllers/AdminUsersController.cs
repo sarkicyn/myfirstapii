@@ -130,11 +130,15 @@ var duration =
     TimeSpan.FromDays(Days ?? 0);
        
         var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
-
+if(user is not null && user.IsBlocked == true)
+        {
+            return Ok(new{message = "пользователь уже заблокирован"});
+        }
         if (user != null)
         {
             user.IsBlocked = true;
             user.BlockedUntill = DateTime.UtcNow + duration;
+            user.Cause = Cause;
             await _action.AddActionAsync(user, $"блокировка пользователя {user.Login}");
             await _context.SaveChangesAsync();
             RemoveUserCache(id);
@@ -164,6 +168,8 @@ var duration =
         if (user != null)
         {
             user.IsBlocked = false;
+            user.BlockedUntill = null;
+            user.Cause = null; 
             await _action.AddActionAsync(currentUser, $"разблокировка пользователя {user.Login}");
             await _context.SaveChangesAsync();
             RemoveUserCache(id);

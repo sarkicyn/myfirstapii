@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
         if (current.Success && current.Data is not null && current.Data.IsBlocked)
         {
             _logger.LogWarning("Вход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", current.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = BlockedUserMessage.Create(current.Data) });
         }
 
         var result = await _auth.LoginAsync(dTO);
@@ -48,7 +48,7 @@ if (!result.Success)
         if (current.Success && current.Data is not null && current.Data.IsBlocked)
         {
             _logger.LogWarning("Вход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", current.Data.Id);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Действие запрещено: ваш аккаунт заблокирован." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = BlockedUserMessage.Create(current.Data) });
         }
 
         var result = await _auth.RegisterAsync(dTO);

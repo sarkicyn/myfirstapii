@@ -46,7 +46,7 @@ if(!authResult.Succeeded||authResult.Principal is null)
 if (result.IsBlocked)
         {
 
-            return ServiceResult<LoginResponse>.Fail("Действие запрещено: ваш аккаунт заблокирован.", StatusCodes.Status403Forbidden);
+            return ServiceResult<LoginResponse>.Fail(BlockedUserMessage.Create(result), StatusCodes.Status403Forbidden);
         }
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
@@ -75,7 +75,7 @@ if(!authResult.Succeeded||authResult.Principal is null)
 if (result.IsBlocked)
         {
             
-            return ServiceResult<LoginResponse>.Fail("Действие запрещено: ваш аккаунт заблокирован.", StatusCodes.Status403Forbidden);
+            return ServiceResult<LoginResponse>.Fail(BlockedUserMessage.Create(result), StatusCodes.Status403Forbidden);
         }
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();

@@ -15,6 +15,7 @@ public class User
     public bool IsBlocked { get;set;} = false;
     public DateTime RefreshTokenExpiresAt { get; set; }
 public DateTime? BlockedUntill {get;set;}
+public string? Cause{get;set;}
     public List<string> actions = new();
    
 

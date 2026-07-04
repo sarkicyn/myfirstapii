@@ -33,7 +33,7 @@ public  class ActiveUserFilter : IAsyncActionFilter
                 "Действие запрещено: текущий пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}",
                 currentUser.Data.Id);
 
-            var result = new ObjectResult(new{message = "доступ запрещен"});
+            var result = new ObjectResult(new{message = BlockedUserMessage.Create(currentUser.Data)});
             result.StatusCode = StatusCodes.Status403Forbidden; 
             context.Result = result;
 

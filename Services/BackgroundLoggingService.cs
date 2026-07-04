@@ -52,6 +52,7 @@ await Task.WhenAll(
                 {
                     item.IsBlocked = false;
                     item.BlockedUntill = null;
+                    item.Cause = null;
                 }
                     await db.SaveChangesAsync();  
             }

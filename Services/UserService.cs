@@ -129,7 +129,7 @@ if (currentUser != null)
         if (currentUser.Data.IsBlocked)
         {
             _logger.LogWarning("Выход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return ServiceResult<string>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden);
+            return ServiceResult<string>.Fail(BlockedUserMessage.Create(currentUser.Data), StatusCodes.Status403Forbidden);
         }
 
         var userToLogout = await _context.Users.FirstOrDefaultAsync(x => x.Id == currentUser.Data.Id);
@@ -157,7 +157,7 @@ if (currentUser != null)
         if (currentUser.Data.IsBlocked)
         {
             _logger.LogWarning("Получение истории запрещено: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", currentUser.Data.Id);
-            return ServiceResult<List<UserHistoryDto>>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden);
+            return ServiceResult<List<UserHistoryDto>>.Fail(BlockedUserMessage.Create(currentUser.Data), StatusCodes.Status403Forbidden);
         }
 
         var cacheKey = CacheKeys.UserHistory(currentUser.Data.Id);

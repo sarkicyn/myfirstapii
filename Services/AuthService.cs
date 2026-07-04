@@ -68,6 +68,10 @@ if(us==null){
 if(!BCrypt.Net.BCrypt.Verify(dTO.password, us.Password)){
      return ServiceResult<LoginResponse>.Fail("Неверный пароль.", StatusCodes.Status401Unauthorized);
 }
+if (us.IsBlocked)
+{
+     return ServiceResult<LoginResponse>.Fail(BlockedUserMessage.Create(us), StatusCodes.Status403Forbidden);
+}
 await _fresh.SaveRefreshTokenAsync(us,hash);
         await _context.SaveChangesAsync();
 
