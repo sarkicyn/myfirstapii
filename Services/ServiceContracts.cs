@@ -81,3 +81,7 @@ public interface IOAuthService
       public Task <ServiceResult<LoginResponse>> HandleGoogleCallback();
       public  Task<ServiceResult<LoginResponse>> HandleGitHubCallback();
 }
+public interface INotificationService
+{
+ public Task SendAsync(string to, string subject, string message);
+}

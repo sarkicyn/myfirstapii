@@ -5,11 +5,13 @@ using MyApiBlya.Services;
 public class GoogleUserService : IGoogleUserService {
     private readonly AppDbContext _context; 
     private readonly ILogger<GoogleUserService> _logger;
+    private readonly INotificationService _email; 
 
-public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger)
+public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger, INotificationService email)
     {
         _context = context;
         _logger = logger;
+        _email = email;
     }
 
     public async Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims)
@@ -51,7 +53,7 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
         await _context.SaveChangesAsync();
         _logger.LogInformation("Создан пользователь через Google. Идентификатор пользователя: {UserId}", user.Id);
     }
-
+await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
     return user;
 }}
 

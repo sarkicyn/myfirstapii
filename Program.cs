@@ -69,6 +69,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<INotificationService,EmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOAuthService, OAuthService>();
@@ -80,6 +81,7 @@ builder.Services.AddScoped<IRefreshTokenService,RefreshTokenService>();
 builder.Services.AddScoped<IGoogleUserService,GoogleUserService>(); 
 builder.Services.AddScoped<IGitHubUserService,GitHubUserService>();
 builder.Services.AddScoped<ActiveUserFilter>(); 
+    builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));     
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(

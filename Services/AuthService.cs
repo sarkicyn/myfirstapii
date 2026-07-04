@@ -15,8 +15,8 @@ public class AuthService : IAuthService
 private readonly IRefreshTokenService _fresh; 
 private readonly IConfiguration _conf;
 private readonly IPasswordHashService _hashpass;
-
-    public AuthService(AppDbContext context,IMemoryCache cache,ILogger<AuthService> logger,IUserActionService action,IJwtTokenService jwt,IRefreshTokenService fresh,IConfiguration conf,IPasswordHashService HashPassword)
+private readonly INotificationService _email;
+    public AuthService(AppDbContext context,IMemoryCache cache,ILogger<AuthService> logger,IUserActionService action,IJwtTokenService jwt,IRefreshTokenService fresh,IConfiguration conf,IPasswordHashService HashPassword,INotificationService email)
     {
         _context  = context;
         _cache = cache;
@@ -26,6 +26,7 @@ private readonly IPasswordHashService _hashpass;
         _fresh  =fresh; 
         _conf =conf;
         _hashpass = HashPassword; 
+        _email = email;
     }
 
     private void RemoveUserCache(int id)
@@ -134,7 +135,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
         await _action.AddActionAsync(us, "регистрация пользователя");
-       
+await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
         return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
     Jwt = jwt,
@@ -231,6 +232,7 @@ if (string.IsNullOrWhiteSpace(adminLogin) ||
               var jwt = await _jwt.GenerateAdminTokenAsync(user);
               await _action.AddActionAsync(user, "вход администратора");
               RemoveUserCache(user.Id);
+              
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{RefreshToken =refreshToken,Jwt = jwt});
         }
     return ServiceResult<LoginResponse>.Fail("Неверные данные.", StatusCodes.Status401Unauthorized);
