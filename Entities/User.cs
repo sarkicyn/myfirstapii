@@ -16,14 +16,9 @@ public class User
     public DateTime RefreshTokenExpiresAt { get; set; }
 
     public List<string> actions = new();
-    public static List<string> Rules = new()
-    {
-        "user.Read",
-        "user.Profile",
-        "user.Auth"
-    };
+   
 
-    public List<UserPermission> perms { get; set; } = new();
+
     public List<UserActionHistory> histories{get;set;} = new(); 
 
 }

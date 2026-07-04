@@ -8,14 +8,12 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
-    public DbSet<Permissions> Permissions { get; set; }
-    public DbSet<UserPermission> UserPermissions { get; set; }
     public DbSet<UserAction> UserActions {get;set;}
     public DbSet<UserActionHistory> UserActionHistories {get;set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new UserPermissionConfiguration());
+        
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -38,25 +36,8 @@ public class AppDbContext : DbContext
             entity.Property(x => x.RefreshTokenExpiresAt).HasColumnName("refreshTokenExpiresAt");
         });
 
-        modelBuilder.Entity<Permissions>(entity =>
-        {
-            
+       
 
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.Id).HasColumnName("id");
-            entity.Property(x => x.Permission).HasColumnName("permission");
-            entity.HasIndex(x=>x.Permission);
-        });
-        modelBuilder.Entity<UserPermission>(entity =>
-{
-    
-
-    entity.Property(x => x.users_id)
-        .HasColumnName("users_id");
-
-    entity.Property(x => x.perms_id)
-        .HasColumnName("perms_id");
-});
         modelBuilder.ApplyConfiguration(new UserActionHistoryConfiguration());
 
         modelBuilder.Entity<UserAction>(entity =>
