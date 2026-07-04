@@ -103,7 +103,7 @@ public class AdminUsersController : ControllerBase
 
         if (user != null)
         {
-            await _action.AddActionAsync(currentUser, $"удаление пользователя {user.Login}");
+            await _action.AddActionAsync(currentUser, $"удаление пользователя {user.Login}");       
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             RemoveUserCache(Id);
@@ -122,24 +122,32 @@ public class AdminUsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("blockUser")]
-    public async Task<IActionResult> BlockUser(int id)
+    public async Task<IActionResult> BlockUser(int id,string Cause,int? Minutes,int? Hours,int? Days)
     {
-        var currentUser = (await _users.GetCurrentUserAsync(User)).Data!;
+var duration =
+    TimeSpan.FromMinutes(Minutes ?? 0) +
+    TimeSpan.FromHours(Hours ?? 0) +
+    TimeSpan.FromDays(Days ?? 0);
+       
         var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
 
         if (user != null)
         {
             user.IsBlocked = true;
-            await _action.AddActionAsync(currentUser, $"блокировка пользователя {user.Login}");
+            user.BlockedUntill = DateTime.UtcNow + duration;
+            await _action.AddActionAsync(user, $"блокировка пользователя {user.Login}");
             await _context.SaveChangesAsync();
             RemoveUserCache(id);
 
             _logger.LogInformation(
                 "Пользователь заблокирован. Идентификатор администратора: {AdminUserId}, идентификатор пользователя: {TargetUserId}",
-                currentUser.Id,
+                user.Id,
                 id);
-
-            return Ok(new { message = $"пользователь {user.Login} заблокирован" });
+            return Ok(new BlockUser
+            {
+                Cause = Cause,
+                DateBlock = DateTime.UtcNow + duration
+            } );
         }
 
         return NotFound(new { message = "Пользователь не найден." });

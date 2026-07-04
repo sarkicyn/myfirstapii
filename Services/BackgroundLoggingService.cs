@@ -15,7 +15,10 @@ public class BackgroundLoggingService : BackgroundService
     {while(!stoppingToken.IsCancellationRequested){
         _logg.LogInformation("Фоновая служба логирования работает.");
 await Task.Delay(100000,stoppingToken);
-await RemoveOldActions(stoppingToken);
+await Task.WhenAll(
+        RemoveOldActions(stoppingToken),
+        UnblockUser(stoppingToken)
+    );
     }
 
     }
@@ -35,6 +38,24 @@ await RemoveOldActions(stoppingToken);
             }
             await db.SaveChangesAsync();
             await Task.Delay(100,cancellationToken:stoppingToken);
+        }
+    }
+    private async Task UnblockUser(CancellationToken stopping)
+    {
+        while(!stopping.IsCancellationRequested){
+        await using var scope = _scope.CreateAsyncScope(); 
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var BlockUsers =  await db.Users.Where(x=>x.IsBlocked==true).ToListAsync();
+        foreach(var item in BlockUsers)
+            {
+                if (item.BlockedUntill < DateTime.UtcNow)
+                {
+                    item.IsBlocked = false;
+                    item.BlockedUntill = null;
+                }
+                    await db.SaveChangesAsync();  
+            }
+                    await Task.Delay(1000,cancellationToken:stopping);
         }
     }
 }

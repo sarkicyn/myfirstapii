@@ -248,7 +248,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, context, cache.Object);
 
-        var result = await controller.BlockUser(999);
+        var result = await controller.BlockUser(999,"",0,0,0);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }

@@ -14,7 +14,7 @@ public class User
     public DateTime CreatedAt { get; set; }
     public bool IsBlocked { get;set;} = false;
     public DateTime RefreshTokenExpiresAt { get; set; }
-
+public DateTime? BlockedUntill {get;set;}
     public List<string> actions = new();
    
 

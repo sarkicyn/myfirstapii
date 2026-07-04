@@ -115,7 +115,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
             context,
             cache);
 
-        var result = await controller.BlockUser(target.Id);
+        var result = await controller.BlockUser(target.Id,"",0,0,0);
 
         Assert.IsType<OkObjectResult>(result);
 
