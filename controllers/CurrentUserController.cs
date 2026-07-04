@@ -36,8 +36,7 @@ public class CurrentUserController : ControllerBase
 
         if (result.Success)
         {
-            await _action.AddActionAsync(current, "получение данных о пользователе");
-            await _context.SaveChangesAsync();
+        
 
             return Ok(result.Data);
         }

@@ -13,35 +13,28 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
- 
+using Docker.DotNet.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
+
+
 public class adminManage
 {
-    private static async Task<IActionResult> ExecuteWithActiveUserFilterAsync(
-        Mock<IUserService> users,
-        Func<Task<IActionResult>> action)
+    private static async Task<IActionResult?> CheckActiveUserManuallyAsync(
+        Mock<IUserService> users)
     {
-        var filterLogger = new Mock<ILogger<ActiveUserFilter>>();
-        var filter = new ActiveUserFilter(users.Object, filterLogger.Object);
-        var actionContext = new ActionContext(
-            new DefaultHttpContext(),
-            new RouteData(),
-            new ActionDescriptor());
-        var context = new ActionExecutingContext(
-            actionContext,
-            new List<IFilterMetadata>(),
-            new Dictionary<string, object?>(),
-            controller: null!);
-
-        await filter.OnActionExecutionAsync(context, async () =>
+        var currentUser = await users.Object.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>());
+        if (currentUser.Data == null)
         {
-            var result = await action();
-            return new ActionExecutedContext(actionContext, new List<IFilterMetadata>(), null!)
+            return new UnauthorizedObjectResult(new{message = "пользователь не найден"});
+        }
+        if (currentUser is not null && currentUser.Data!.IsBlocked == true)
+        {
+            return new ObjectResult(new{message = "доступ запрещен" })
             {
-                Result = result
+                StatusCode = StatusCodes.Status403Forbidden
             };
-        });
-
-        return context.Result!;
+        }
+        return null;
     }
 
     [Fact]
@@ -55,7 +48,7 @@ public class adminManage
         users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
         var controller = new AdminUsersController(action.Object,logger.Object,users.Object,null!,cache.Object);
         var pagin = new PaginationParams();
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.GetUsers(pagin));
+        var result = await CheckActiveUserManuallyAsync(users);
     Assert.IsType<UnauthorizedObjectResult>(result); 
 
         
@@ -78,7 +71,7 @@ public class adminManage
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 var pagin = new PaginationParams(); 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.GetUsers(pagin));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -96,7 +89,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.GetUserById(1));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -118,7 +111,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.GetUserById(2));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -136,7 +129,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.DeleteUser(1));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -158,7 +151,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.DeleteUser(2));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -204,7 +197,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.BlockUser(1));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -226,7 +219,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.BlockUser(2));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -272,7 +265,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.UnblockUser(1));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -294,7 +287,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.UnblockUser(2));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);

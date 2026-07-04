@@ -15,10 +15,11 @@ public class BackgroundLoggingService : BackgroundService
     {while(!stoppingToken.IsCancellationRequested){
         _logg.LogInformation("Фоновая служба логирования работает.");
 await Task.Delay(100000,stoppingToken);
+await RemoveOldActions(stoppingToken);
     }
 
     }
-    private  async Task RemoeOldActions(CancellationToken stoppingToken)
+    private  async Task RemoveOldActions(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {await using var  scope = _scope.CreateAsyncScope();

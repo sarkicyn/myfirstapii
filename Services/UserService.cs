@@ -223,7 +223,7 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
         if (user.Identity?.IsAuthenticated == true)
         {
             await _action.AddActionAsync(currentUser.Data, "данные о профиле");
-       
+       await _context.SaveChangesAsync();
             _logger.LogInformation("Запрос утверждений текущего пользователя завершен. Идентификатор текущего пользователя: {CurrentUserId}", currentUser.Data.Id);
             
          var User  = new CurrentUserProfileDto()

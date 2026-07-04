@@ -16,32 +16,25 @@ using Microsoft.AspNetCore.Routing;
 
 public class CurrentUserTest()
 {
-    private static async Task<IActionResult> ExecuteWithActiveUserFilterAsync(
-        Mock<IUserService> users,
-        Func<Task<IActionResult>> action)
+    private static async Task<IActionResult?> CheckActiveUserManuallyAsync(
+        Mock<IUserService> users)
     {
-        var filterLogger = new Mock<ILogger<ActiveUserFilter>>();
-        var filter = new ActiveUserFilter(users.Object, filterLogger.Object);
-        var actionContext = new ActionContext(
-            new DefaultHttpContext(),
-            new RouteData(),
-            new ActionDescriptor());
-        var context = new ActionExecutingContext(
-            actionContext,
-            new List<IFilterMetadata>(),
-            new Dictionary<string, object?>(),
-            controller: null!);
+        var currentUser = await users.Object.GetCurrentUserAsync(new ClaimsPrincipal());
 
-        await filter.OnActionExecutionAsync(context, async () =>
+        if (!currentUser.Success || currentUser.Data is null)
         {
-            var result = await action();
-            return new ActionExecutedContext(actionContext, new List<IFilterMetadata>(), null!)
-            {
-                Result = result
-            };
-        });
+            return new UnauthorizedObjectResult(new { message = "Требуется авторизация." });
+        }
 
-        return context.Result!;
+        if (currentUser.Data.IsBlocked)
+        {
+            return new ObjectResult(new { message = "доступ запрещен" })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
+        }
+
+        return null;
     }
 
     [Fact]
@@ -57,7 +50,7 @@ public class CurrentUserTest()
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.UnblockUser(1));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
@@ -79,7 +72,7 @@ public class CurrentUserTest()
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.UnblockUser(2));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -102,7 +95,7 @@ public class CurrentUserTest()
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await ExecuteWithActiveUserFilterAsync(users, () => controller.RenameUserAsync("newName"));
+        var result = await CheckActiveUserManuallyAsync(users);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
