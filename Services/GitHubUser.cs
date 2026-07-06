@@ -56,7 +56,7 @@ private readonly INotificationService _email;
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Создан пользователь через GitHub. Идентификатор пользователя: {UserId}", user.Id);
-await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
+// await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
 
         return user;
     }

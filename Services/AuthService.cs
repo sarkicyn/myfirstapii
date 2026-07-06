@@ -135,7 +135,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
         await _action.AddActionAsync(us, "регистрация пользователя");
-await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
+// await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
         return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
     Jwt = jwt,
