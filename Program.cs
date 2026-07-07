@@ -16,7 +16,9 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Org.BouncyCastle.Tls;
 using System.Security.Claims;
-
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,7 +92,32 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource =>
+    {
+        resource.AddService("MyApi");
+    })
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:4317");
+            });
+    });
+builder.Services
+    .AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddPrometheusExporter();
+    });
 
 builder.Services.AddControllers().AddJsonOptions(options =>
     {
@@ -207,7 +234,7 @@ builder.Services.AddCors(options =>  //добавляем разрешенные
             .AllowAnyMethod();
     });
 });
-builder.Services.AddRateLimiter(options =>
+builder.Services.AddRateLimiter(async options =>
 {
     options.AddPolicy("IpPolicy", context =>
     {
@@ -216,25 +243,39 @@ builder.Services.AddRateLimiter(options =>
 
         return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: ipAddress,
-            factory: _ => new FixedWindowRateLimiterOptions
+                factory: Emptykey => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 50,
                 Window = TimeSpan.FromMinutes(1)
             });
+            
     });
-    options.AddPolicy("UserPolicy", context =>
+    options.AddPolicy ("UserPolicy", context =>
     {
        var user = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
            return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: user??"anonymous",
-            factory: _ => new FixedWindowRateLimiterOptions
+            factory: EmptyKey => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 50,
                 Window = TimeSpan.FromMinutes(1)
             });
     });
+     options.OnRejected = async (context,token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            "слишком много запросов,подождите немного",token
+        );
+    };
 });
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    await db.Database.MigrateAsync();
+}
 app.MapHealthChecks("/health");
 app.UseExceptionHandler(errorApp =>
 {
@@ -299,7 +340,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 app.UseMiddleware<AllowedPathMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
-
+app.MapPrometheusScrapingEndpoint();
 app.MapControllers();
 
 app.Run();

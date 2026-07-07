@@ -22,7 +22,8 @@ public async Task InvokeAsync(HttpContext context)
     "/google-path",
     "/github-path",
     "/swagger",
-    "/health"
+    "/health",
+    "/metrics"
     
 
 };
