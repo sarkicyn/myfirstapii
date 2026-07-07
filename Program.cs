@@ -11,8 +11,11 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using AspNet.Security.OAuth.GitHub;
 using System.Text.Json.Serialization;
-
-
+using Microsoft.Extensions.Options;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using Org.BouncyCastle.Tls;
+using System.Security.Claims;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -204,6 +207,33 @@ builder.Services.AddCors(options =>  //добавляем разрешенные
             .AllowAnyMethod();
     });
 });
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("IpPolicy", context =>
+    {
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString()
+                        ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ipAddress,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 50,
+                Window = TimeSpan.FromMinutes(1)
+            });
+    });
+    options.AddPolicy("UserPolicy", context =>
+    {
+       var user = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+           return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: user??"anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 50,
+                Window = TimeSpan.FromMinutes(1)
+            });
+    });
+});
 var app = builder.Build();
 app.MapHealthChecks("/health");
 app.UseExceptionHandler(errorApp =>
@@ -266,7 +296,7 @@ app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseRateLimiter();
 app.UseMiddleware<AllowedPathMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 

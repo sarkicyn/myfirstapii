@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
-
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 [ApiController]
+ [EnableRateLimiting("UserPolicy")] 
 [Route("api/users")]
 public class AdminUsersController : ControllerBase
 {
@@ -35,8 +37,8 @@ public class AdminUsersController : ControllerBase
         _cache.Remove(CacheKeys.CurrentUserById(id));
         _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
-
     [Authorize(Roles = "Admin")]
+ 
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("{id:int:min(1):max(100)}")]
     public async Task<IActionResult> GetUserById(int id)

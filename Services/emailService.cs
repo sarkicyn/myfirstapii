@@ -38,7 +38,7 @@ _logger.LogWarning($"{_options.Password}");
 SecureSocketOptions.StartTls
     );
     await client.AuthenticateAsync(
-        "artemsarkisan10@gmail.com",
+        _options.Email,
         _options.Password
     );
     await client.SendAsync(Message);

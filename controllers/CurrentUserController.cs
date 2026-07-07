@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyApiBlya.Services;
-
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 [ApiController]
+ [EnableRateLimiting("UserPolicy")]
 [Route("api/users")]
 public class CurrentUserController : ControllerBase
 {
@@ -24,7 +26,9 @@ public class CurrentUserController : ControllerBase
     }
 
     [Authorize]
+ 
     [ServiceFilter(typeof(ActiveUserFilter))]
+ 
     [HttpGet("me")]
     public async Task<IActionResult> GetCurrentUserProfileAsync()
     {
@@ -45,6 +49,7 @@ public class CurrentUserController : ControllerBase
     }
 
     [Authorize]
+
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("rename")]
     public async Task<IActionResult> RenameUserAsync(string newLogin)
@@ -61,6 +66,7 @@ public class CurrentUserController : ControllerBase
     }
 
     [Authorize]
+
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("history")]
     public async Task<IActionResult> GetHistory()

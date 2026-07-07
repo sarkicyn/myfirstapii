@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyApiBlya.Services;
-
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 [ApiController]
+ [EnableRateLimiting("IpPolicy")] 
+
 [Route("api/users")]
 public class AuthController : ControllerBase
 {
@@ -77,6 +80,8 @@ return Ok(result.Data);
     }
 
 [Authorize]
+ [EnableRateLimiting("UserPolicy")] 
+
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()

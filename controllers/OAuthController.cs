@@ -4,8 +4,12 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyApiBlya.Services;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+ [EnableRateLimiting("IpPolicy")] 
 
 [ApiController]
+
 [Route("api/users")]
 public class OAuthController : ControllerBase
 {
