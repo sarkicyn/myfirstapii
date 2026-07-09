@@ -14,7 +14,7 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
         _email = email;
     }
 
-    public async Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims)
+    public async Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims,CancellationToken token)
 {
     var providerId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var email = userClaims.FindFirst(ClaimTypes.Email)?.Value;
@@ -29,7 +29,7 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
     var user = await _context.Users
         .FirstOrDefaultAsync(x =>
             x.Provider == "Google" &&
-            x.ProviderUserId == providerId);
+            x.ProviderUserId == providerId,token);
 
     if (user is null)
     {
@@ -49,11 +49,11 @@ public GoogleUserService(AppDbContext context, ILogger<GoogleUserService> logger
                 
             
 
-      await _context.Users.AddAsync(user);
-        await _context.SaveChangesAsync();
+      await _context.Users.AddAsync(user,token);
+        await _context.SaveChangesAsync(token);
         _logger.LogInformation("Создан пользователь через Google. Идентификатор пользователя: {UserId}", user.Id);
     }
-await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
+await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию",token);
     return user;
 }}
 

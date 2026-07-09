@@ -22,23 +22,24 @@ public class TestAuthLogic
 
     public async Task Login_WhenResult_NotOk(string? login, string? password)
     {
+        var token = CancellationToken.None;
         var dto  = new LoginDto
         {
             Login = login,
             password = password
         }; 
 var authServiceMock = new Mock<IAuthService>();
-authServiceMock.Setup(x=>x.LoginAsync(It.IsAny<LoginDto>())).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверно введены данные"));
+authServiceMock.Setup(x=>x.LoginAsync(It.IsAny<LoginDto>(),token)).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверно введены данные"));
 var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
-users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
+users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token)).ReturnsAsync(ServiceResult<User?>.Fail("пользователь не найден"));
 var auth = new Mock<IAuthService>();
 var controller = new AuthController(logger.Object,users.Object,authServiceMock.Object);
-var result  = await controller.Login(dto);
+var result  = await controller.Login(dto,token);
 Assert.IsType<BadRequestObjectResult>(result); 
-authServiceMock.Verify(x=>x.LoginAsync(dto),Times.Once);
+authServiceMock.Verify(x=>x.LoginAsync(dto,token),Times.Once);
     }
 
   [Theory]
@@ -50,6 +51,7 @@ authServiceMock.Verify(x=>x.LoginAsync(dto),Times.Once);
 [InlineData("test", null)]
 public async Task Login_WhenService_BadRequest(string? abdu, string? eblan)
     {
+var token = CancellationToken.None;
 
 var dto = new LoginDto
 {
@@ -57,8 +59,8 @@ var dto = new LoginDto
     password =eblan
 };
 
-        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!); 
-        var result = await service.LoginAsync(dto);
+        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!,email:null!); 
+        var result = await service.LoginAsync(dto,token);
         
 Assert.False(result.Success);
 Assert.NotNull(result.Error);
@@ -68,8 +70,9 @@ Assert.Null(result.Data);
     [Fact]
     public async Task Login_WhenUserBlocked_ReturnForbid()
     {
+        var token = CancellationToken.None;
         var users = new Mock<IUserService>();
-        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync( ServiceResult<User?>.Ok(new User
+        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token)).ReturnsAsync( ServiceResult<User?>.Ok(new User
         { 
             Id = 1,
             IsBlocked = true
@@ -87,13 +90,14 @@ var result = await controller.Login(new LoginDto
     Login = "artem",
     password = "krasivi"
     
-});
+},token);
  Assert.IsType<ObjectResult>(result);
-auth.Verify(x=>x.LoginAsync(It.IsAny<LoginDto>()),Times.Never);
+auth.Verify(x=>x.LoginAsync(It.IsAny<LoginDto>(),It.IsAny<CancellationToken>()),Times.Never);
     }
     [Fact]
     public async Task Login_WhenResult_Ok()
     {
+       var token = CancellationToken.None;
        var tokens  = new LoginResponse
        {
            Jwt = "jwt",
@@ -107,8 +111,8 @@ auth.Verify(x=>x.LoginAsync(It.IsAny<LoginDto>()),Times.Never);
        }; 
         var users = new Mock<IUserService>();
         var auth  = new Mock<IAuthService>();
-        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
-        auth.Setup(x=>x.LoginAsync(dto)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(tokens));
+        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token)).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
+        auth.Setup(x=>x.LoginAsync(dto,token)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(tokens));
           
         var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
@@ -117,7 +121,7 @@ var cache = new Mock<IMemoryCache>();
 
 
 var controller = new AuthController(logger.Object,users.Object,auth.Object);
-var result = await controller.Login(dto);
+var result = await controller.Login(dto,token);
 var type=Assert.IsType<OkObjectResult>(result);
 var typeV=Assert.IsType<LoginResponse>(type.Value);
 Assert.Equal("jwt",typeV.Jwt);

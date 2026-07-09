@@ -16,8 +16,8 @@ public class BackgroundLoggingService : BackgroundService
         _logg.LogInformation("Фоновая служба логирования работает.");
 await Task.Delay(100000,stoppingToken);
 await Task.WhenAll(
-        // RemoveOldActions(stoppingToken),
-        // UnblockUser(stoppingToken)
+        RemoveOldActions(stoppingToken),
+        UnblockUser(stoppingToken)
     );
     }
 

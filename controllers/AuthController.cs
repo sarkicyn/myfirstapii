@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyApiBlya.Services;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using System.ComponentModel;
 [ApiController]
  [EnableRateLimiting("IpPolicy")] 
 
@@ -25,16 +26,16 @@ public class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto dTO)
+        public async Task<IActionResult> Login(LoginDto dTO,CancellationToken token)
         {
-        var current = await _users.GetCurrentUserAsync(User);
+        var current = await _users.GetCurrentUserAsync(User,token);
         if (current.Success && current.Data is not null && current.Data.IsBlocked)
         {
             _logger.LogWarning("Вход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", current.Data.Id);
             return StatusCode(StatusCodes.Status403Forbidden, new { message = BlockedUserMessage.Create(current.Data) });
         }
 
-        var result = await _auth.LoginAsync(dTO);
+        var result = await _auth.LoginAsync(dTO,token);
 if (!result.Success)
         {
           return  ServiceResultMapper.ToActionResult(this,result);
@@ -45,16 +46,16 @@ if (!result.Success)
     
     [AllowAnonymous]
     [HttpPost("register")]
-        public async Task<IActionResult> Register(LoginDto dTO)
+        public async Task<IActionResult> Register(LoginDto dTO,CancellationToken token)
         {
-        var current = await _users.GetCurrentUserAsync(User);
+        var current = await _users.GetCurrentUserAsync(User,token);
         if (current.Success && current.Data is not null && current.Data.IsBlocked)
         {
             _logger.LogWarning("Вход запрещен: пользователь заблокирован. Идентификатор пользователя: {CurrentUserId}", current.Data.Id);
             return StatusCode(StatusCodes.Status403Forbidden, new { message = BlockedUserMessage.Create(current.Data) });
         }
 
-        var result = await _auth.RegisterAsync(dTO);
+        var result = await _auth.RegisterAsync(dTO,token);
 if (!result.Success)
         {
           return  ServiceResultMapper.ToActionResult(this,result);
@@ -65,11 +66,11 @@ if (!result.Success)
 
     [AllowAnonymous]
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request,CancellationToken token)
     {
 
 
-       var result = await _auth.RefreshAllTokens(request);
+       var result = await _auth.RefreshAllTokens(request,token);
         if (!result.Success)
         {
             return ServiceResultMapper.ToActionResult(this,result);
@@ -84,9 +85,9 @@ return Ok(result.Data);
 
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken token)
     {
-        var result = await _users.LogoutAsync(User);
+        var result = await _users.LogoutAsync(User,token);
         if (!result.Success)
         {
             return ServiceResultMapper.ToActionResult(this, result);
@@ -97,10 +98,10 @@ return Ok(result.Data);
 
     [AllowAnonymous]
  [HttpPost("admin")]
- public async Task<IActionResult> AuthenticateAdminAsync(LoginDto dto)
+ public async Task<IActionResult> AuthenticateAdminAsync(LoginDto dto,CancellationToken token)
     {
 
-        var admin = await _auth.AuthenticateAdminAsync(dto);
+        var admin = await _auth.AuthenticateAdminAsync(dto,token);
         if(admin.Success){
         return Ok(admin.Data);}
  return ServiceResultMapper.ToActionResult(this,admin);

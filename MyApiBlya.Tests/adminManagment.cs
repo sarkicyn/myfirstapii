@@ -20,9 +20,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 public class adminManage
 {
     private static async Task<IActionResult?> CheckActiveUserManuallyAsync(
-        Mock<IUserService> users)
+        Mock<IUserService> users,CancellationToken token)
     {
-        var currentUser = await users.Object.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>());
+        var currentUser = await users.Object.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token);
         if (currentUser.Data == null)
         {
             return new UnauthorizedObjectResult(new{message = "пользователь не найден"});
@@ -40,15 +40,16 @@ public class adminManage
     [Fact]
     public async Task getUsers_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
      
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();   
-        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
+        users.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token)).ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
         var controller = new AdminUsersController(action.Object,logger.Object,users.Object,null!,cache.Object);
         var pagin = new PaginationParams();
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
     Assert.IsType<UnauthorizedObjectResult>(result); 
 
         
@@ -56,12 +57,13 @@ public class adminManage
     [Fact]
     public async Task GetUsers_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -71,7 +73,7 @@ public class adminManage
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 var pagin = new PaginationParams(); 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -79,29 +81,31 @@ var pagin = new PaginationParams();
     [Fact]
     public async Task GetUserById_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task GetUserById_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -111,7 +115,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -119,29 +123,31 @@ var pagin = new PaginationParams();
     [Fact]
     public async Task DeleteUser_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task DeleteUser_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -151,7 +157,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -159,6 +165,7 @@ var pagin = new PaginationParams();
     [Fact]
     public async Task DeleteUser_WhenUserNotFound_ReturnsNotFound()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
@@ -170,7 +177,7 @@ var pagin = new PaginationParams();
 
         var context = new AppDbContext(options);
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -180,36 +187,38 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, context, cache.Object);
 
-        var result = await controller.DeleteUser(999);
+        var result = await controller.DeleteUser(999,token);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
     [Fact]
     public async Task BlockUser_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task BlockUser_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -219,7 +228,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -227,6 +236,7 @@ var pagin = new PaginationParams();
     [Fact]
     public async Task BlockUser_WhenUserNotFound_ReturnsNotFound()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
@@ -238,7 +248,7 @@ var pagin = new PaginationParams();
 
         var context = new AppDbContext(options);
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -248,36 +258,38 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, context, cache.Object);
 
-        var result = await controller.BlockUser(999,"",0,0,0);
+        var result = await controller.BlockUser(999,"",0,0,0,token);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
     [Fact]
     public async Task UnBlockUser_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task UnBlockUser_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -287,7 +299,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -295,6 +307,7 @@ var pagin = new PaginationParams();
     [Fact]
     public async Task UnBlockUser_WhenUserNotFound_ReturnsNotFound()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
@@ -306,7 +319,7 @@ var pagin = new PaginationParams();
 
         var context = new AppDbContext(options);
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -316,7 +329,7 @@ var pagin = new PaginationParams();
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, context, cache.Object);
 
-        var result = await controller.UnblockUser(999);
+        var result = await controller.UnblockUser(999,token);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }

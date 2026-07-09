@@ -19,20 +19,21 @@ public class TestRefreshLogic()
 {[Fact]
     public async Task Refresh_WhenService_ReturnBadRequest()
     {
+    var token = CancellationToken.None;
     var request = new RefreshRequest
     {
         RefreshToken = "test-refresh-token"
     };
        var refreshAuthService = new Mock<IAuthService>();
-       refreshAuthService.Setup(x=>x.RefreshAllTokens(request)).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверные данные"));
+       refreshAuthService.Setup(x=>x.RefreshAllTokens(request,token)).ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверные данные"));
        var action = new Mock<IUserActionService>();
 var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
 var controller = new AuthController(logger.Object,users.Object,refreshAuthService.Object);
-var result = await controller.Refresh(request);
+var result = await controller.Refresh(request,token);
 Assert.IsType<BadRequestObjectResult>(result);
-refreshAuthService.Verify(x=>x.RefreshAllTokens(request),Times.Once);
+refreshAuthService.Verify(x=>x.RefreshAllTokens(request,token),Times.Once);
  
     }
     [Theory]
@@ -41,18 +42,20 @@ refreshAuthService.Verify(x=>x.RefreshAllTokens(request),Times.Once);
 [InlineData("   ")]
         public async Task Refresh_ServiceRefresh(string refresh)
     {
-        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!); 
+        var token = CancellationToken.None;
+        var service  = new AuthService(context:null!,cache:null!,logger:null!,action:null!,jwt:null!,fresh:null!,conf:null!,HashPassword:null!,email:null!); 
    var request = new RefreshRequest
    {
        RefreshToken = refresh
    };
-    var result = await service.RefreshAllTokens(request); 
+    var result = await service.RefreshAllTokens(request,token); 
    Assert.IsType<ServiceResult<LoginResponse>>(result);
         
     }
     [Fact]
     public async Task Refresh_WhenServiceRefresh_ReturnOk()
     {
+        var token = CancellationToken.None;
         var request = new RefreshRequest
     {
         RefreshToken = "test-refresh-token"
@@ -60,7 +63,7 @@ refreshAuthService.Verify(x=>x.RefreshAllTokens(request),Times.Once);
 
        var refreshAuthService = new Mock<IAuthService>();
        var res = "jwt token";
-       refreshAuthService.Setup(x=>x.RefreshAllTokens(request)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(new LoginResponse
+       refreshAuthService.Setup(x=>x.RefreshAllTokens(request,token)).ReturnsAsync(ServiceResult<LoginResponse>.Ok(new LoginResponse
        {
            Jwt = res
        }));
@@ -69,7 +72,7 @@ var logger = new Mock<ILogger<AuthController>>();
 var cache = new Mock<IMemoryCache>();
 var users = new Mock<IUserService>();
 var controller = new AuthController(logger.Object,users.Object,refreshAuthService.Object);
-var result = await controller.Refresh(request);
+var result = await controller.Refresh(request,token);
 var type =Assert.IsType<OkObjectResult>(result);
 var typeV = Assert.IsType<LoginResponse>(type.Value);
 Assert.Equal("jwt token",typeV.Jwt);
@@ -77,6 +80,7 @@ Assert.Equal("jwt token",typeV.Jwt);
     [Fact]
 public async Task RefreshAllTokens_WhenRefreshTokenNotFound_ReturnsUnauthorized()
 {
+    var token = CancellationToken.None;
     var options = new DbContextOptionsBuilder<AppDbContext>()
         .UseInMemoryDatabase(Guid.NewGuid().ToString())
         .Options;
@@ -91,12 +95,13 @@ public async Task RefreshAllTokens_WhenRefreshTokenNotFound_ReturnsUnauthorized(
         jwt: null!,
         fresh: null!,
         conf: null!,
-        HashPassword: null!);
+        HashPassword: null!,
+        email: null!);
 
     var result = await service.RefreshAllTokens(new RefreshRequest
     {
         RefreshToken = "unknown-refresh-token"
-    });
+    },token);
 
     Assert.False(result.Success);
     Assert.Equal(StatusCodes.Status401Unauthorized, result.StatusCode);
@@ -106,6 +111,7 @@ public async Task RefreshAllTokens_WhenRefreshTokenNotFound_ReturnsUnauthorized(
 [Fact]
 public async Task RefreshAllTokens_WhenRefreshTokenEmpty_ReturnsBadRequest()
 {
+    var token = CancellationToken.None;
     var service = new AuthService(
         context: null!,
         cache: null!,
@@ -114,12 +120,13 @@ public async Task RefreshAllTokens_WhenRefreshTokenEmpty_ReturnsBadRequest()
         jwt: null!,
         fresh: null!,
         conf: null!,
-        HashPassword: null!);
+        HashPassword: null!,
+        email: null!);
 
     var result = await service.RefreshAllTokens(new RefreshRequest
     {
         RefreshToken = ""
-    });
+    },token);
 
     Assert.False(result.Success);
     Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -128,6 +135,7 @@ public async Task RefreshAllTokens_WhenRefreshTokenEmpty_ReturnsBadRequest()
 [Fact]
 public async Task RefreshAllTokens_WhenTokenExpired_ReturnUnauthorized()
     {
+        var token = CancellationToken.None;
         var jwt = new Mock<IJwtTokenService>();
        var refresh = new Mock<IRefreshTokenService>();
         
@@ -145,7 +153,8 @@ var auth = new AuthService(
     jwt.Object,
   refresh.Object,
     conf: null!,
-    HashPassword: null!);
+    HashPassword: null!,
+    email: null!);
    context.Users.Add(new User
     {
         Login = "test",
@@ -160,7 +169,7 @@ var auth = new AuthService(
         RefreshToken = "refresh"
     };
         await context.SaveChangesAsync();
-   var result = await auth.RefreshAllTokens(request);
+   var result = await auth.RefreshAllTokens(request,token);
 Assert.False(result.Success);
 Assert.Equal(StatusCodes.Status401Unauthorized,result.StatusCode);
 Assert.Null(result.Data);
@@ -171,6 +180,7 @@ refresh.Verify(x=>x.GenerateRefreshToken(),Times.Never);
 [Fact]
 public async Task RefreshAllTokens_WhenRefreshTokenValid_ReturnsNewTokens()
 {
+    var token = CancellationToken.None;
     var jwt = new Mock<IJwtTokenService>();
     var refresh = new Mock<IRefreshTokenService>();
     var action = new Mock<IUserActionService>();
@@ -199,10 +209,10 @@ public async Task RefreshAllTokens_WhenRefreshTokenValid_ReturnsNewTokens()
     refresh.Setup(x => x.GenerateRefreshToken())
         .Returns(("new-refresh-token", "new-refresh-token-hash"));
 
-    refresh.Setup(x => x.SaveRefreshTokenAsync(It.IsAny<User>(), It.IsAny<string>()))
+    refresh.Setup(x => x.SaveRefreshTokenAsync(It.IsAny<User>(), It.IsAny<string>(),token))
         .Returns(Task.CompletedTask);
 
-    action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>()))
+    action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>(),token))
         .Returns(Task.CompletedTask);
 
     var auth = new AuthService(
@@ -213,12 +223,13 @@ public async Task RefreshAllTokens_WhenRefreshTokenValid_ReturnsNewTokens()
         jwt: jwt.Object,
         fresh: refresh.Object,
         conf: null!,
-        HashPassword: null!);
+        HashPassword: null!,
+        email: null!);
 
     var result = await auth.RefreshAllTokens(new RefreshRequest
     {
         RefreshToken = "refresh"
-    });
+    },token);
 
     Assert.NotNull(result);
     Assert.True(result.Success);
@@ -233,6 +244,7 @@ public async Task RefreshAllTokens_WhenRefreshTokenValid_ReturnsNewTokens()
 [Fact]
 public async Task RefreshAllTokens_WhenAdminRefreshTokenValid_ReturnsNewTokens()
 {
+    var token = CancellationToken.None;
     var jwt = new Mock<IJwtTokenService>();
     var refresh = new Mock<IRefreshTokenService>();
     var action = new Mock<IUserActionService>();
@@ -261,10 +273,10 @@ public async Task RefreshAllTokens_WhenAdminRefreshTokenValid_ReturnsNewTokens()
     refresh.Setup(x => x.GenerateRefreshToken())
         .Returns(("new-admin-refresh-token", "new-admin-refresh-token-hash"));
 
-    refresh.Setup(x => x.SaveRefreshTokenAsync(It.IsAny<User>(), It.IsAny<string>()))
+    refresh.Setup(x => x.SaveRefreshTokenAsync(It.IsAny<User>(), It.IsAny<string>(),token))
         .Returns(Task.CompletedTask);
 
-    action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>()))
+    action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>(),token))
         .Returns(Task.CompletedTask);
 
     var auth = new AuthService(
@@ -275,12 +287,13 @@ public async Task RefreshAllTokens_WhenAdminRefreshTokenValid_ReturnsNewTokens()
         jwt: jwt.Object,
         fresh: refresh.Object,
         conf: null!,
-        HashPassword: null!);
+        HashPassword: null!,
+        email: null!);
 
     var result = await auth.RefreshAllTokens(new RefreshRequest
     {
         RefreshToken = "admin-refresh"
-    });
+    },token);
 
     Assert.NotNull(result);
     Assert.True(result.Success);

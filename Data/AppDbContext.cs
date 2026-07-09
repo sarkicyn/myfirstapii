@@ -20,7 +20,6 @@ public class AppDbContext : DbContext
             entity.ToTable("users");
             entity.HasIndex(x=>x.Login).IsUnique();
             entity.HasIndex(x=>x.Id).IsUnique();
-
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("id");
             entity.Property(x => x.Login).HasColumnName("login");
@@ -57,6 +56,7 @@ public class AppDbContext : DbContext
             entity.Property(x=>x.actions_id).HasColumnName("action");
             entity.Property(x=>x.CreatedAt).HasColumnName("createdat");
         });
+       
 
 
     }

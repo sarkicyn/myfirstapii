@@ -11,6 +11,7 @@ public class TestAdminAuth
     [Fact]
     public async Task AdminAuth_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var dto = new LoginDto
         {
             Login = "wrong-admin",
@@ -18,7 +19,7 @@ public class TestAdminAuth
         };
 
         var auth = new Mock<IAuthService>();
-        auth.Setup(x => x.AuthenticateAdminAsync(dto))
+        auth.Setup(x => x.AuthenticateAdminAsync(dto,token))
             .ReturnsAsync(ServiceResult<LoginResponse>.Fail("неверные данные"));
 
         var action = new Mock<IUserActionService>();
@@ -28,15 +29,16 @@ public class TestAdminAuth
 
         var controller = new AuthController(logger.Object, users.Object, auth.Object);
 
-        var result = await controller.AuthenticateAdminAsync(dto);
+        var result = await controller.AuthenticateAdminAsync(dto,token);
 
         Assert.IsType<BadRequestObjectResult>(result);
-        auth.Verify(x => x.AuthenticateAdminAsync(dto), Times.Once);
+        auth.Verify(x => x.AuthenticateAdminAsync(dto,token), Times.Once);
     }
 
     [Fact]
     public async Task AdminAuth_Service_WhenInvalidData_ReturnsFail()
     {
+        var token = CancellationToken.None;
         var dto = new LoginDto
         {
             Login = "wrong-admin",
@@ -55,10 +57,11 @@ public class TestAdminAuth
             jwt: null!,
             fresh: null!,
             conf: conf.Object,
-            HashPassword: null!
+            HashPassword: null!,
+            email: null!
         );
 
-        var result = await service.AuthenticateAdminAsync(dto);
+        var result = await service.AuthenticateAdminAsync(dto,token);
 
         Assert.False(result.Success);
         Assert.NotNull(result.Error);
@@ -66,5 +69,4 @@ public class TestAdminAuth
     }
     
 }
-
 

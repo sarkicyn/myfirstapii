@@ -47,9 +47,9 @@ public IActionResult LoginGoogle()
 
 [HttpGet("google-callback")]
 [ApiExplorerSettings(IgnoreApi = true)]
-public async Task<IActionResult> GoogleCallback()
+public async Task<IActionResult> GoogleCallback(CancellationToken token = default)
 {
-    var result = await _oauth.HandleGoogleCallback();
+    var result = await _oauth.HandleGoogleCallback(token);
         if (!result.Success)
         {
             if (result.StatusCode == StatusCodes.Status403Forbidden)
@@ -90,10 +90,10 @@ public IActionResult LoginGithub()
 
 [HttpGet("github-callback")]
 [ApiExplorerSettings(IgnoreApi = true)] 
-public async Task<IActionResult> GithubCallback()
+public async Task<IActionResult> GithubCallback(CancellationToken token = default)
 {
 
-    var result = await _oauth.HandleGitHubCallback();
+    var result = await _oauth.HandleGitHubCallback(token);
     if (!result.Success)
         {
             if (result.StatusCode == StatusCodes.Status403Forbidden)

@@ -20,6 +20,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DeleteUser_WhenResult_Ok()
     {
+        var token = CancellationToken.None;
         await using var context = _postgres.CreateDbContext();
 
         var target = new User
@@ -45,11 +46,11 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
         await context.SaveChangesAsync();
 
         var action = new Mock<IUserActionService>();
-        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>()))
+        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>(),token))
             .Returns(Task.CompletedTask);
 
         var users = new Mock<IUserService>();
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(admin));
 
         var logger = new Mock<ILogger<AdminUsersController>>();
@@ -62,7 +63,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
             context,
             cache);
 
-        var result = await controller.DeleteUser(target.Id);
+        var result = await controller.DeleteUser(target.Id,token);
 
         Assert.IsType<OkObjectResult>(result);
 
@@ -73,6 +74,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task BlockUser_WhenResult_Ok()
     {
+        var token = CancellationToken.None;
         await using var context = _postgres.CreateDbContext();
 
         var target = new User
@@ -98,11 +100,11 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
         await context.SaveChangesAsync();
 
         var action = new Mock<IUserActionService>();
-        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>()))
+        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>(),token))
             .Returns(Task.CompletedTask);
 
         var users = new Mock<IUserService>();
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(admin));
 
         var logger = new Mock<ILogger<AdminUsersController>>();
@@ -115,7 +117,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
             context,
             cache);
 
-        var result = await controller.BlockUser(target.Id,"",0,0,0);
+        var result = await controller.BlockUser(target.Id,"",0,0,0,token);
 
         Assert.IsType<OkObjectResult>(result);
 
@@ -127,6 +129,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task UnblockUser_WhenResult_Ok()
     {
+        var token = CancellationToken.None;
         await using var context = _postgres.CreateDbContext();
 
         var target = new User
@@ -152,11 +155,11 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
         await context.SaveChangesAsync();
 
         var action = new Mock<IUserActionService>();
-        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>()))
+        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>(),token))
             .Returns(Task.CompletedTask);
 
         var users = new Mock<IUserService>();
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(admin));
 
         var logger = new Mock<ILogger<AdminUsersController>>();
@@ -169,7 +172,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
             context,
             cache);
 
-        var result = await controller.UnblockUser(target.Id);
+        var result = await controller.UnblockUser(target.Id,token);
 
         Assert.IsType<OkObjectResult>(result);
 
@@ -180,6 +183,7 @@ public class AdminUsersPostgresTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task ProfileDate_whenResult_Ok()
     {
+        var token = CancellationToken.None;
         await using  var db = _postgres.CreateDbContext(); 
 
 var logger = new Mock<ILogger<CurrentUserController>>();
@@ -194,17 +198,17 @@ var logger = new Mock<ILogger<CurrentUserController>>();
         db.Users.Add(currentUser.Data); 
         await db.SaveChangesAsync();
         var user=  new Mock<IUserService>();
-        user.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(currentUser);
-        user.Setup(x=>x.GetCurrentUserProfileAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(ServiceResult<CurrentUserProfileDto>.Ok(new CurrentUserProfileDto
+        user.Setup(x=>x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token)).ReturnsAsync(currentUser);
+        user.Setup(x=>x.GetCurrentUserProfileAsync(It.IsAny<ClaimsPrincipal>(),token)).ReturnsAsync(ServiceResult<CurrentUserProfileDto>.Ok(new CurrentUserProfileDto
         {Login= "artem",
         Role = "User"
             
         } ));
          var action = new Mock<IUserActionService>();
-        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>()))
+        action.Setup(x => x.AddActionAsync(It.IsAny<User>(), It.IsAny<string>(),token))
             .Returns(Task.CompletedTask);
             var controller= new CurrentUserController(action.Object,logger.Object,user.Object,db);
-            var result = await controller.GetCurrentUserProfileAsync();
+            var result = await controller.GetCurrentUserProfileAsync(token);
             var type = Assert.IsType<OkObjectResult>(result);
 Assert.IsType<CurrentUserProfileDto>(type.Value);
             var userDb = db.Users.FindAsync(currentUser.Data.Id);
@@ -214,6 +218,7 @@ Assert.IsType<CurrentUserProfileDto>(type.Value);
     [Fact]
     public async Task GetHistory_WhenResult_Ok()
     {
+        var token = CancellationToken.None;
         await using var db = _postgres.CreateDbContext();
 
         var logger = new Mock<ILogger<CurrentUserController>>();
@@ -245,7 +250,7 @@ Assert.IsType<CurrentUserProfileDto>(type.Value);
         await db.SaveChangesAsync();
 
         var users = new Mock<IUserService>();
-  users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+  users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>(),token))
     .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Ok(new List<UserHistoryDto>
     {
         new UserHistoryDto
@@ -256,7 +261,7 @@ Assert.IsType<CurrentUserProfileDto>(type.Value);
     }));
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, db);
         
-        var result = await controller.GetHistory();
+        var result = await controller.GetHistory(token);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var history = Assert.IsType<List<UserHistoryDto>>(ok.Value);

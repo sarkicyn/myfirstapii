@@ -36,13 +36,13 @@ private readonly IGitHubUserService _git;
         _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
 
-  public async Task<ServiceResult<LoginResponse>> HandleGoogleCallback(){
+  public async Task<ServiceResult<LoginResponse>> HandleGoogleCallback(CancellationToken Token){
     var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("sexScheme");
 if(!authResult.Succeeded||authResult.Principal is null)
         {
             return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через Google.", StatusCodes.Status401Unauthorized);
         }
-   var result = await _google.FindOrCreateGoogleUserAsync(authResult.Principal);
+   var result = await _google.FindOrCreateGoogleUserAsync(authResult.Principal,Token);
 if (result.IsBlocked)
         {
 
@@ -51,27 +51,27 @@ if (result.IsBlocked)
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
 _logger.LogInformation("Сгенерирован refresh token для входа через Google.");
-await _fresh.SaveRefreshTokenAsync(result,hash);
+await _fresh.SaveRefreshTokenAsync(result,hash,Token);
         
 
         result.RefreshTokenHash = hash;
       var jwt = await _jwt.GenerateUserTokenAsync(result);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(Token);
         RemoveUserCache(result.Id);
-await _action.AddActionAsync(result, "вход через google");
+await _action.AddActionAsync(result, "вход через google",Token);
 await _httpContextAccessor.HttpContext!.SignOutAsync("sexScheme");
        
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{
         RefreshToken = refreshToken,
        Jwt =  jwt});
 }
-  public async Task<ServiceResult<LoginResponse>> HandleGitHubCallback(){
+  public async Task<ServiceResult<LoginResponse>> HandleGitHubCallback(CancellationToken token ){
   var authResult = await _httpContextAccessor.HttpContext!.AuthenticateAsync("sexScheme");
 if(!authResult.Succeeded||authResult.Principal is null)
         {
             return ServiceResult<LoginResponse>.Fail("Не удалось выполнить аутентификацию через GitHub.", StatusCodes.Status401Unauthorized);
         }
-   var result = await _git.FindOrCreateGitHubUserAsync(authResult.Principal);
+   var result = await _git.FindOrCreateGitHubUserAsync(authResult.Principal,token);
 if (result.IsBlocked)
         {
             
@@ -80,14 +80,14 @@ if (result.IsBlocked)
         
     var (refreshToken, hash) = _fresh.GenerateRefreshToken();
 _logger.LogInformation("Сгенерирован refresh token для входа через GitHub.");
-await _fresh.SaveRefreshTokenAsync(result,hash);
+await _fresh.SaveRefreshTokenAsync(result,hash,token);
         
         
 
       var jwt = await _jwt.GenerateUserTokenAsync(result);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(token);
         RemoveUserCache(result.Id);
-await _action.AddActionAsync(result, "вход через github");
+await _action.AddActionAsync(result, "вход через github",token);
 await _httpContextAccessor.HttpContext!.SignOutAsync("sexScheme");
        
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{

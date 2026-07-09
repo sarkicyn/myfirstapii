@@ -17,9 +17,9 @@ using Microsoft.AspNetCore.Routing;
 public class CurrentUserTest()
 {
     private static async Task<IActionResult?> CheckActiveUserManuallyAsync(
-        Mock<IUserService> users)
+        Mock<IUserService> users,CancellationToken token)
     {
-        var currentUser = await users.Object.GetCurrentUserAsync(new ClaimsPrincipal());
+        var currentUser = await users.Object.GetCurrentUserAsync(new ClaimsPrincipal(),token);
 
         if (!currentUser.Success || currentUser.Data is null)
         {
@@ -40,29 +40,31 @@ public class CurrentUserTest()
     [Fact]
     public async Task UnBlockUser_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Fail("ошибка"));
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task UnBlockUser_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<AdminUsersController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -72,7 +74,7 @@ public class CurrentUserTest()
 
         var controller = new AdminUsersController(action.Object, logger.Object, users.Object, null!, cache.Object);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -80,12 +82,13 @@ public class CurrentUserTest()
     [Fact]
     public async Task Rename_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<CurrentUserController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -95,7 +98,7 @@ public class CurrentUserTest()
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await CheckActiveUserManuallyAsync(users);
+        var result = await CheckActiveUserManuallyAsync(users,token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -103,12 +106,13 @@ public class CurrentUserTest()
     [Fact]
     public async Task Rename_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<CurrentUserController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetCurrentUserAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<User?>.Ok(new User
             {
                 Id = 1,
@@ -116,46 +120,48 @@ public class CurrentUserTest()
                 IsBlocked = false
             }));
 
-        users.Setup(x => x.RenameUserAsync(1, "newName", It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.RenameUserAsync(1, "newName", It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<string>.Fail("ошибка"));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await controller.RenameUserAsync("newName");
+        var result = await controller.RenameUserAsync("newName",token);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
     [Fact]
     public async Task GetHistory_WhenResult_NotOk()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<CurrentUserController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await controller.GetHistory();
+        var result = await controller.GetHistory(token);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
     [Fact]
     public async Task GetHistory_WhenUserBlocked_ReturnsForbidden()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<CurrentUserController>>();
         var cache = new Mock<IMemoryCache>();
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Fail("Доступ запрещен.", StatusCodes.Status403Forbidden));
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await controller.GetHistory();
+        var result = await controller.GetHistory(token);
 
         var type = Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, type.StatusCode);
@@ -163,12 +169,13 @@ public class CurrentUserTest()
     [Fact]
     public async Task GetHistory_WhenSuccess_ReturnsOkWithHistory()
     {
+        var token = CancellationToken.None;
         var action = new Mock<IUserActionService>();
         var logger = new Mock<ILogger<CurrentUserController>>();
         var cache = new MemoryCache(new MemoryCacheOptions());
         var users = new Mock<IUserService>();
 
-        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>()))
+        users.Setup(x => x.GetUserHistoryAsync(It.IsAny<ClaimsPrincipal>(),token))
             .ReturnsAsync(ServiceResult<List<UserHistoryDto>>.Ok(new List<UserHistoryDto>
             {
                 new UserHistoryDto
@@ -180,7 +187,7 @@ public class CurrentUserTest()
 
         var controller = new CurrentUserController(action.Object, logger.Object, users.Object, null!);
 
-        var result = await controller.GetHistory();
+        var result = await controller.GetHistory(token);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var historyResult = Assert.IsType<List<UserHistoryDto>>(ok.Value);

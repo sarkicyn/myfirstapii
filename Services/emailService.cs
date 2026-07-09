@@ -13,7 +13,7 @@ public class EmailService : INotificationService
         _options = options.Value;
         _logger = logger;
     }
-    public async Task SendAsync(string to, string subject,string message)
+    public async Task SendAsync(string to, string subject,string message,CancellationToken token)
     {
         // _logger.LogInformation($"{_options.Email}");
         var Message = new MimeMessage();
@@ -39,10 +39,10 @@ SecureSocketOptions.StartTls
     );
     await client.AuthenticateAsync(
         _options.Email,
-        _options.Password
+        _options.Password,token
     );
-    await client.SendAsync(Message);
-    await client.DisconnectAsync(true);
+    await client.SendAsync(Message,token);
+    await client.DisconnectAsync(true,token);
     
     return;}
     catch (Exception ex)

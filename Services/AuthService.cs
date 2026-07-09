@@ -37,7 +37,7 @@ private readonly INotificationService _email;
         _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
 
-     public async Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO){
+     public async Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO,CancellationToken token){
     if (dTO is null)
             {
      return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.", StatusCodes.Status400BadRequest);
@@ -62,7 +62,7 @@ bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
 
 var (refreshToken, hash) = _fresh.GenerateRefreshToken();
 _logger.LogInformation("Сгенерирован refresh token для входа пользователя."); 
-var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
+var us = await _context.Users.FirstOrDefaultAsync(x=>x.Login ==dTO.Login,token); 
 if(us==null){ 
      return ServiceResult<LoginResponse>.Fail("Неверный логин.", StatusCodes.Status401Unauthorized);
 }
@@ -73,13 +73,13 @@ if (us.IsBlocked)
 {
      return ServiceResult<LoginResponse>.Fail(BlockedUserMessage.Create(us), StatusCodes.Status403Forbidden);
 }
-await _fresh.SaveRefreshTokenAsync(us,hash);
-        await _context.SaveChangesAsync();
+await _fresh.SaveRefreshTokenAsync(us,hash,token);
+        await _context.SaveChangesAsync(token);
 
       var jwt = await _jwt.GenerateUserTokenAsync(us);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
-        await _action.AddActionAsync(us, "вход пользователя");
+        await _action.AddActionAsync(us, "вход пользователя",token);
        
         return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
@@ -88,7 +88,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
 }); 
  }
 
-     public async Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO){
+     public async Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO,CancellationToken token){
     if (dTO is null)
             {
      return ServiceResult<LoginResponse>.Fail("Данные отсутствуют.", StatusCodes.Status400BadRequest);
@@ -113,7 +113,7 @@ bool regg = Regex.IsMatch(dTO.Login!, @"[^a-zA-Z0-9]");
 
 var us = await _context.Users
     .AsNoTracking()
-    .FirstOrDefaultAsync(x=>x.Login ==dTO.Login); 
+    .FirstOrDefaultAsync(x=>x.Login ==dTO.Login,token); 
 if(us!=null){ 
      return ServiceResult<LoginResponse>.Fail("Логин уже занят.", StatusCodes.Status409Conflict);
 }
@@ -127,15 +127,15 @@ _logger.LogInformation("Сгенерирован refresh token для регис
             Role = "User",
             CreatedAt = DateTime.UtcNow
         };
-await _fresh.SaveRefreshTokenAsync(us,hash);
-        await _context.Users.AddAsync(us);
-        await _context.SaveChangesAsync();
+await _fresh.SaveRefreshTokenAsync(us,hash,token);
+        await _context.Users.AddAsync(us,token);
+        await _context.SaveChangesAsync(token);
 
       var jwt = await _jwt.GenerateUserTokenAsync(us);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
-        await _action.AddActionAsync(us, "регистрация пользователя");
-// await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
+        await _action.AddActionAsync(us, "регистрация пользователя",token);
+await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию",token);
         return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
     Jwt = jwt,
@@ -143,7 +143,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
 }); 
  }
 
-   public async Task<ServiceResult<LoginResponse>> RefreshAllTokens(RefreshRequest request){
+   public async Task<ServiceResult<LoginResponse>> RefreshAllTokens(RefreshRequest request,CancellationToken Token){
  var refToken =  request.RefreshToken;
 
        if (string.IsNullOrWhiteSpace(refToken))
@@ -159,7 +159,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash);
             .AsNoTracking()
             .FirstOrDefaultAsync(x =>
             x.RefreshTokenHash == token ||
-            x.RefreshTokenHash == refToken);
+            x.RefreshTokenHash == refToken,Token);
        if (userTrue is null)
 {
      return ServiceResult<LoginResponse>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
@@ -174,8 +174,8 @@ if (userTrue.RefreshTokenExpiresAt <= DateTime.UtcNow)
 }if(userTrue.Role=="Admin"){
 var jwtAdmin  = await _jwt.GenerateAdminTokenAsync(userTrue);
 var (Refresh,Hash)  = _fresh.GenerateRefreshToken();
-await _fresh.SaveRefreshTokenAsync(userTrue,Hash); 
-await _action.AddActionAsync(userTrue, "обновление  токенов");
+await _fresh.SaveRefreshTokenAsync(userTrue,Hash,Token); 
+await _action.AddActionAsync(userTrue, "обновление  токенов",Token);
 return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
     Jwt = jwtAdmin,
@@ -184,8 +184,8 @@ return ServiceResult<LoginResponse>.Ok(new LoginResponse
 
 var jwt  = await _jwt.GenerateUserTokenAsync(userTrue);
 var (refresh,hash) = _fresh.GenerateRefreshToken();
- await _fresh.SaveRefreshTokenAsync(userTrue,hash);
-await _action.AddActionAsync(userTrue, "обновление токенов");
+ await _fresh.SaveRefreshTokenAsync(userTrue,hash,Token);
+await _action.AddActionAsync(userTrue, "обновление токенов",Token);
 return ServiceResult<LoginResponse>.Ok(new LoginResponse
 {
     Jwt = jwt,
@@ -193,7 +193,7 @@ return ServiceResult<LoginResponse>.Ok(new LoginResponse
 });
    }
 
-    public async Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto)
+    public async Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto,CancellationToken token)
     {
         if (dto is null)
         {
@@ -210,9 +210,8 @@ if (string.IsNullOrWhiteSpace(adminLogin) ||
 
         if (dto.Login == adminLogin &&  BCrypt.Net.BCrypt.Verify(dto.password, adminPasswordHash))
         {
-            
         
-          var user = await _context.Users.FirstOrDefaultAsync(x=>x.Login == dto.Login);
+          var user = await _context.Users.FirstOrDefaultAsync(x=>x.Login == dto.Login,token);
         if (user == null)
         {
             user = new User()
@@ -227,10 +226,10 @@ if (string.IsNullOrWhiteSpace(adminLogin) ||
             await _context.Users.AddAsync(user); 
     }
              var(refreshToken,hash) =  _fresh.GenerateRefreshToken();
-             await _fresh.SaveRefreshTokenAsync(user,hash); 
-              await _context.SaveChangesAsync();
+             await _fresh.SaveRefreshTokenAsync(user,hash,token); 
+              await _context.SaveChangesAsync(token);
               var jwt = await _jwt.GenerateAdminTokenAsync(user);
-              await _action.AddActionAsync(user, "вход администратора");
+              await _action.AddActionAsync(user, "вход администратора",token);
               RemoveUserCache(user.Id);
               
     return ServiceResult<LoginResponse>.Ok(new LoginResponse{RefreshToken =refreshToken,Jwt = jwt});

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MyApiBlya.Services;
 using System.Security.Claims;
+using System.Security.Principal;
 
 public class UserService : IUserService
 {
@@ -26,7 +27,7 @@ public class UserService : IUserService
         _cache.Remove(CacheKeys.CurrentUserById(id));
         _cache.Remove(CacheKeys.CurrentUserNotFound(id));
     }
-     public async Task<ServiceResult<User>> GetUserByIdAsync(int id)
+     public async Task<ServiceResult<User>> GetUserByIdAsync(int id,CancellationToken token)
     { 
         
         var cacheKey = CacheKeys.UserById(id);
@@ -66,7 +67,7 @@ public class UserService : IUserService
 
 
     }
-       public async Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user)
+       public async Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user,CancellationToken token)
     {
         var currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -95,7 +96,7 @@ if (!_cache.TryGetValue(cacheKey, out User? currentUser))
 {
     currentUser = await _context.Users
         .AsNoTracking()
-        .FirstOrDefaultAsync(user => user.Id == userId);
+        .FirstOrDefaultAsync(user => user.Id == userId,token);
 
     if (currentUser != null)
     {
@@ -115,11 +116,11 @@ if (currentUser != null)
         
     }
 
-    public async Task<ServiceResult<string>> LogoutAsync(ClaimsPrincipal user)
+    public async Task<ServiceResult<string>> LogoutAsync(ClaimsPrincipal user,CancellationToken token)
     {
         _logger.LogInformation("Запрос выхода из аккаунта начат.");
 
-        var currentUser = await GetCurrentUserAsync(user);
+        var currentUser = await GetCurrentUserAsync(user,token);
         if (!currentUser.Success || currentUser.Data is null)
         {
             _logger.LogWarning("Выход не выполнен: текущий пользователь не найден.");
@@ -138,7 +139,7 @@ if (currentUser != null)
             userToLogout.RefreshTokenHash = null;
         }
 
-        await _action.AddActionAsync(currentUser.Data, "выход из аккаунта");
+        await _action.AddActionAsync(currentUser.Data, "выход из аккаунта",token);
         await _context.SaveChangesAsync();
         RemoveUserCache(currentUser.Data.Id);
 
@@ -146,9 +147,9 @@ if (currentUser != null)
         return ServiceResult<string>.Ok("Вы вышли из аккаунта.");
     }
 
-    public async Task<ServiceResult<List<UserHistoryDto>>> GetUserHistoryAsync(ClaimsPrincipal user)
+    public async Task<ServiceResult<List<UserHistoryDto>>> GetUserHistoryAsync(ClaimsPrincipal user,CancellationToken token)
     {
-        var currentUser = await GetCurrentUserAsync(user);
+        var currentUser = await GetCurrentUserAsync(user,token);
         if (!currentUser.Success || currentUser.Data is null)
         {
             return ServiceResult<List<UserHistoryDto>>.Fail("Требуется авторизация.", StatusCodes.Status401Unauthorized);
@@ -173,7 +174,7 @@ if (currentUser != null)
                     action = x.UserAction != null ? x.UserAction.Action : null,
                     time = x.CreatedAt
                 })
-                .ToListAsync();
+                .ToListAsync(token);
 
             actions = histories.Select(x => new UserHistoryDto
             {
@@ -187,7 +188,7 @@ if (currentUser != null)
         return ServiceResult<List<UserHistoryDto>>.Ok(actions ?? new List<UserHistoryDto>());
     }
 
-  public async Task<ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pags){
+  public async Task<ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pags,CancellationToken token ){
        var pageSize = 10;
            
            var users = await _context.Users
@@ -195,8 +196,8 @@ if (currentUser != null)
                .OrderBy(x=>x.Id)
                .Skip((pags.Page- 1)*pageSize)
                .Take(pageSize)
-               .ToListAsync();
-        var countUsers =  await _context.Users.AsNoTracking().CountAsync();
+               .ToListAsync(token);
+        var countUsers =  await _context.Users.AsNoTracking().CountAsync(token);
        
             if (users == null)
             {
@@ -214,16 +215,16 @@ if (currentUser != null)
   }
 
 
-public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user){
- var currentUser = await GetCurrentUserAsync(user);
+public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user,CancellationToken token){
+ var currentUser = await GetCurrentUserAsync(user,token);
         if (currentUser.Data == null)
         {
             return ServiceResult<CurrentUserProfileDto>.Fail("Пользователь не найден.", StatusCodes.Status401Unauthorized);
         }
         if (user.Identity?.IsAuthenticated == true)
         {
-            await _action.AddActionAsync(currentUser.Data, "данные о профиле");
-       await _context.SaveChangesAsync();
+            await _action.AddActionAsync(currentUser.Data, "данные о профиле",token);
+       await _context.SaveChangesAsync(token);
             _logger.LogInformation("Запрос утверждений текущего пользователя завершен. Идентификатор текущего пользователя: {CurrentUserId}", currentUser.Data.Id);
             
          var User  = new CurrentUserProfileDto()
@@ -238,7 +239,7 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
 
 
 
- public async Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user){
+ public async Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user,CancellationToken token){
      
 
         if (id <= 0)
@@ -255,20 +256,20 @@ public async Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsy
 
         if (await _context.Users
             .AsNoTracking()
-            .AnyAsync(user => user.Id != id && user.Login == name))
+            .AnyAsync(user => user.Id != id && user.Login == name,token))
         {
      return ServiceResult<string>.Fail("Логин уже занят.", StatusCodes.Status409Conflict);
             
         }
 
-        var userToRename = await _context.Users.FirstOrDefaultAsync(item => item.Id == id);
+        var userToRename = await _context.Users.FirstOrDefaultAsync(item => item.Id == id,token);
         if (userToRename == null)
         {
             return ServiceResult<string>.Fail("Пользователь не найден.", StatusCodes.Status404NotFound);
         }
 
         userToRename.Login = name;
-        await _action.AddActionAsync(userToRename, "смена имени");
+        await _action.AddActionAsync(userToRename, "смена имени",token);
         RemoveUserCache(id);
         
         _logger.LogInformation("Запрос переименования пользователя завершен. Идентификатор текущего пользователя: {CurrentUserId}, идентификатор целевого пользователя: {TargetUserId}", userToRename.Id, id);

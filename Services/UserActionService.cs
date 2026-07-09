@@ -14,7 +14,7 @@ public class UserActionService : IUserActionService
         _cache = cache;
         _logger = logger;
     }
- public  async Task AddActionAsync(User user   , string act)
+ public  async Task AddActionAsync(User user   , string act,CancellationToken token)
     {
 if (!user.actions.Contains(act))
 {
@@ -23,15 +23,15 @@ if (!user.actions.Contains(act))
 
 var action  = await _context.UserActions
     .AsNoTracking()
-    .FirstOrDefaultAsync(x=>x.Action==act);
+    .FirstOrDefaultAsync(x=>x.Action==act,token);
         if (action == null)
         {
              action = new UserAction()
             {
                 Action = act
             };
-            await _context.UserActions.AddAsync(action);
-                    await _context.SaveChangesAsync(); 
+            await _context.UserActions.AddAsync(action,token);
+                    await _context.SaveChangesAsync(token); 
             
         }
 var UserAction =new UserActionHistory(){
@@ -39,12 +39,10 @@ var UserAction =new UserActionHistory(){
             actions_id = action!.Id
         };
 
-await _context.UserActionHistories.AddAsync(UserAction);
-await _context.SaveChangesAsync(); 
+await _context.UserActionHistories.AddAsync(UserAction,token);
+await _context.SaveChangesAsync(token); 
 _cache.Remove(CacheKeys.UserHistory(user.Id));
 _logger.LogInformation("Добавлена история действия пользователя. Идентификатор пользователя: {UserId}, действие: {Action}", user.Id, act);
-
-        
 
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using MyApiBlya.Services;
+using System.Security.Principal;
 public class    CurrentUserProfileDto
 {
 
@@ -41,47 +42,47 @@ public interface IJwtTokenService
 }
 public interface IUserActionService  
 {
-    Task AddActionAsync(User user,string act);
+    Task AddActionAsync(User user,string act,CancellationToken token);
 }
 public interface IRefreshTokenService
 {
      (string RefreshToken, string Hash) GenerateRefreshToken(); 
-     Task SaveRefreshTokenAsync(User user, string hash);
+     Task SaveRefreshTokenAsync(User user, string hash,CancellationToken token);
      
 }
 public interface IGoogleUserService
 {
-    Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims); 
+    Task<User> FindOrCreateGoogleUserAsync(ClaimsPrincipal userClaims,CancellationToken token); 
 }
 public interface IGitHubUserService
 {
-        public  Task<User> FindOrCreateGitHubUserAsync(ClaimsPrincipal claims);
+        public  Task<User> FindOrCreateGitHubUserAsync(ClaimsPrincipal claims,CancellationToken token);
 }
-public interface IUserService
+public interface    IUserService
 {
-     public  Task< ServiceResult<User>> GetUserByIdAsync(int id);
-     public  Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user);
-     public Task<ServiceResult<string>> LogoutAsync(ClaimsPrincipal user);
-     public Task<ServiceResult<List<UserHistoryDto>>> GetUserHistoryAsync(ClaimsPrincipal user);
-     public  Task <ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pagination);
-       public  Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user);
-        public  Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user);
+     public  Task< ServiceResult<User>> GetUserByIdAsync(int id,CancellationToken token);
+     public  Task<ServiceResult<User?>> GetCurrentUserAsync(ClaimsPrincipal user,CancellationToken token);
+     public Task<ServiceResult<string>> LogoutAsync(ClaimsPrincipal user,CancellationToken token);
+     public Task<ServiceResult<List<UserHistoryDto>>> GetUserHistoryAsync(ClaimsPrincipal user,CancellationToken token);
+     public  Task <ServiceResult<PaginationReult>> GetAllUsersAsync(PaginationParams pagination,CancellationToken token);
+       public  Task<ServiceResult<CurrentUserProfileDto>> GetCurrentUserProfileAsync(ClaimsPrincipal user,CancellationToken token);
+        public  Task<ServiceResult<string>> RenameUserAsync(int id, string name,ClaimsPrincipal user,CancellationToken token);
 }
 
 public interface IAuthService
 {
-       public  Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO);
-       public  Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO);
-        public  Task<ServiceResult<LoginResponse>>RefreshAllTokens(RefreshRequest request);
-         public Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto);
+       public  Task<ServiceResult<LoginResponse>>LoginAsync(LoginDto dTO,CancellationToken token);
+       public  Task<ServiceResult<LoginResponse>>RegisterAsync(LoginDto dTO,CancellationToken token);
+        public  Task<ServiceResult<LoginResponse>>RefreshAllTokens(RefreshRequest request,CancellationToken token);
+         public Task<ServiceResult<LoginResponse>> AuthenticateAdminAsync(LoginDto dto,CancellationToken token);
 }
 
 public interface IOAuthService
 {
-      public Task <ServiceResult<LoginResponse>> HandleGoogleCallback();
-      public  Task<ServiceResult<LoginResponse>> HandleGitHubCallback();
+      public Task <ServiceResult<LoginResponse>> HandleGoogleCallback(CancellationToken token);
+      public  Task<ServiceResult<LoginResponse>> HandleGitHubCallback(CancellationToken token);
 }
 public interface INotificationService
 {
- public Task SendAsync(string to, string subject, string message);
+ public Task SendAsync(string to, string subject, string message,CancellationToken token);
 }

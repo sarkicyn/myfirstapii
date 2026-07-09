@@ -41,7 +41,7 @@ public class AdminUsersController : ControllerBase
  
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("{id:int:min(1):max(100)}")]
-    public async Task<IActionResult> GetUserById(int id)
+    public async Task<IActionResult> GetUserById(int id,CancellationToken token)
     {
         _logger.LogInformation("Запрос данных пользователя начат. Идентификатор запрошенного пользователя: {RequestedUserId}", id);
 
@@ -56,7 +56,7 @@ public class AdminUsersController : ControllerBase
 
         if (!_cache.TryGetValue(cacheKey, out ServiceResult<User>? user))
         {
-             user = await _users.GetUserByIdAsync(id);
+             user = await _users.GetUserByIdAsync(id,token);
 
             if (user == null || !user.Success)
             {
@@ -68,8 +68,8 @@ public class AdminUsersController : ControllerBase
             _cache.Set(cacheKey, user, TimeSpan.FromMinutes(3));
         }
 
-        var current = await _users.GetCurrentUserAsync(User);
-        await _action.AddActionAsync(current.Data!, $"получение пользователя {user!.Data!.Login} по id");
+        var current = await _users.GetCurrentUserAsync(User,token);
+        await _action.AddActionAsync(current.Data!, $"получение пользователя {user!.Data!.Login} по id",token);
         await _context.SaveChangesAsync();
 
         return Ok(user);
@@ -78,14 +78,14 @@ public class AdminUsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("all")]
-    public async Task<IActionResult> GetUsers([FromQuery] PaginationParams pagination)
+    public async Task<IActionResult> GetUsers([FromQuery] PaginationParams pagination,CancellationToken token)
     {
         _logger.LogInformation("Запрос списка пользователей начат.");
 
-        var currentUser = (await _users.GetCurrentUserAsync(User)).Data!;
-        var users = await _users.GetAllUsersAsync(pagination);
+        var currentUser = (await _users.GetCurrentUserAsync(User,token)).Data!;
+        var users = await _users.GetAllUsersAsync(pagination,token);
 
-        await _action.AddActionAsync(currentUser, "получить всех пользователей");
+        await _action.AddActionAsync(currentUser, "получить всех пользователей",token);
 
         _logger.LogInformation(
             "Запрос списка пользователей завершен. Идентификатор текущего пользователя: {CurrentUserId}, количество пользователей: {UsersCount}",
@@ -98,16 +98,16 @@ public class AdminUsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpDelete("deleteUser")]
-    public async Task<IActionResult> DeleteUser(int Id)
+    public async Task<IActionResult> DeleteUser(int Id,CancellationToken token)
     {
-        var currentUser = (await _users.GetCurrentUserAsync(User)).Data!;
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == Id);
+        var currentUser = (await _users.GetCurrentUserAsync(User,token)).Data!;
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == Id,token);
 
         if (user != null)
         {
-            await _action.AddActionAsync(currentUser, $"удаление пользователя {user.Login}");       
+            await _action.AddActionAsync(currentUser, $"удаление пользователя {user.Login}",token);       
             _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(token);
             RemoveUserCache(Id);
 
             _logger.LogInformation(
@@ -124,14 +124,14 @@ public class AdminUsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("blockUser")]
-    public async Task<IActionResult> BlockUser(int id,string Cause,int? Minutes,int? Hours,int? Days)
+    public async Task<IActionResult> BlockUser(int id,string Cause,int? Minutes,int? Hours,int? Days,CancellationToken token)
     {
 var duration =
     TimeSpan.FromMinutes(Minutes ?? 0) +
     TimeSpan.FromHours(Hours ?? 0) +
     TimeSpan.FromDays(Days ?? 0);
        
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id,token);
 if(user is not null && user.IsBlocked == true)
         {
             return Ok(new{message = "пользователь уже заблокирован"});
@@ -141,15 +141,15 @@ if(user is not null && user.IsBlocked == true)
             user.IsBlocked = true;
             user.BlockedUntill = DateTime.UtcNow + duration;
             user.Cause = Cause;
-            await _action.AddActionAsync(user, $"блокировка пользователя {user.Login}");
-            await _context.SaveChangesAsync();
+            await _action.AddActionAsync(user, $"блокировка пользователя {user.Login}",token);
+            await _context.SaveChangesAsync(token);
             RemoveUserCache(id);
 
             _logger.LogInformation(
                 "Пользователь заблокирован. Идентификатор администратора: {AdminUserId}, идентификатор пользователя: {TargetUserId}",
                 user.Id,
                 id);
-            return Ok(new BlockUser
+            return Ok(new BlockedUserResponseAdmin
             {
                 Cause = Cause,
                 DateBlock = DateTime.UtcNow + duration
@@ -162,18 +162,18 @@ if(user is not null && user.IsBlocked == true)
     [Authorize(Roles = "Admin")]
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("UnblockUser")]
-    public async Task<IActionResult> UnblockUser(int id)
+    public async Task<IActionResult> UnblockUser(int id,CancellationToken token)
     {
-        var currentUser = (await _users.GetCurrentUserAsync(User)).Data!;
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
+        var currentUser = (await _users.GetCurrentUserAsync(User,token)).Data!;
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == id,token);
 
         if (user != null)
         {
             user.IsBlocked = false;
             user.BlockedUntill = null;
             user.Cause = null; 
-            await _action.AddActionAsync(currentUser, $"разблокировка пользователя {user.Login}");
-            await _context.SaveChangesAsync();
+            await _action.AddActionAsync(currentUser, $"разблокировка пользователя {user.Login}",token);
+            await _context.SaveChangesAsync(token);
             RemoveUserCache(id);
 
             _logger.LogInformation(

@@ -27,8 +27,9 @@ private readonly IJwtTokenService _jwt;
         return (refreshToken, hash);
     }
 
-    public async Task SaveRefreshTokenAsync(User user, string hash)
+    public async Task SaveRefreshTokenAsync(User user, string hash,CancellationToken token)
     {
+        await Task.Delay(50,token);
         user.RefreshTokenHash = hash;
         user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
 

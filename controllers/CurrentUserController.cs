@@ -30,13 +30,13 @@ public class CurrentUserController : ControllerBase
     [ServiceFilter(typeof(ActiveUserFilter))]
  
     [HttpGet("me")]
-    public async Task<IActionResult> GetCurrentUserProfileAsync()
+    public async Task<IActionResult> GetCurrentUserProfileAsync(CancellationToken token)
     {
-        var current = (await _users.GetCurrentUserAsync(User)).Data!;
+        var current = (await _users.GetCurrentUserAsync(User,token)).Data!;
 
         _logger.LogInformation("Запрос утверждений текущего пользователя начат.");
 
-        var result = await _users.GetCurrentUserProfileAsync(User);
+        var result = await _users.GetCurrentUserProfileAsync(User,token);
 
         if (result.Success)
         {
@@ -52,10 +52,10 @@ public class CurrentUserController : ControllerBase
 
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpPut("rename")]
-    public async Task<IActionResult> RenameUserAsync(string newLogin)
+    public async Task<IActionResult> RenameUserAsync(string newLogin,CancellationToken token)
     {
-        var current = (await _users.GetCurrentUserAsync(User)).Data!;
-        var result = await _users.RenameUserAsync(current.Id, newLogin, User);
+        var current = (await _users.GetCurrentUserAsync(User,token)).Data!;
+        var result = await _users.RenameUserAsync(current.Id, newLogin, User,token);
 
         if (result.Success)
         {
@@ -69,9 +69,9 @@ public class CurrentUserController : ControllerBase
 
     [ServiceFilter(typeof(ActiveUserFilter))]
     [HttpGet("history")]
-    public async Task<IActionResult> GetHistory()
+    public async Task<IActionResult> GetHistory(CancellationToken token)
     {
-        var result = await _users.GetUserHistoryAsync(User);
+        var result = await _users.GetUserHistoryAsync(User,token);
 
         if (result.Success)
         {

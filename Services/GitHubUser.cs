@@ -14,7 +14,7 @@ private readonly INotificationService _email;
         _email = email;
     }
 
-    public async Task<User> FindOrCreateGitHubUserAsync(ClaimsPrincipal claims)
+    public async Task<User> FindOrCreateGitHubUserAsync(ClaimsPrincipal claims,CancellationToken token)
     {
         var githubId = claims
             .FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -34,7 +34,7 @@ private readonly INotificationService _email;
         var user = await _context.Users
             .FirstOrDefaultAsync(x =>
                 x.Provider == "GitHub" &&
-                x.ProviderUserId == githubId);
+                x.ProviderUserId == githubId,token);
 
         if (user is not null)
         {
@@ -53,10 +53,10 @@ private readonly INotificationService _email;
             RefreshTokenExpiresAt = DateTime.UtcNow
         };
 
-        await _context.Users.AddAsync(user);
-        await _context.SaveChangesAsync();
+        await _context.Users.AddAsync(user,token);
+        await _context.SaveChangesAsync(token);
         _logger.LogInformation("Создан пользователь через GitHub. Идентификатор пользователя: {UserId}", user.Id);
-// await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию");
+await _email.SendAsync("sarkicyn@icloud.com","добро пожаловать!","вы успешно прошли аутентификацию",token);
 
         return user;
     }

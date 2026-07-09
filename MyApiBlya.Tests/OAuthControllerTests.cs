@@ -56,7 +56,7 @@ public class OAuthControllerTests
     {
         var auth  = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
-        auth.Setup(x=>x.HandleGoogleCallback()).ReturnsAsync(ServiceResult<LoginResponse>.Fail("ошибка"));
+        auth.Setup(x=>x.HandleGoogleCallback(It.IsAny<CancellationToken>())).ReturnsAsync(ServiceResult<LoginResponse>.Fail("ошибка"));
         var controller = new OAuthController(auth.Object,loger.Object);
     var result = await controller.GoogleCallback(); 
     Assert.IsType<BadRequestObjectResult>(result);
@@ -68,7 +68,7 @@ public class OAuthControllerTests
         var auth = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
 
-        auth.Setup(x => x.HandleGoogleCallback())
+        auth.Setup(x => x.HandleGoogleCallback(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<LoginResponse>.Fail(
                 "Действие запрещено: ваш аккаунт заблокирован.",
                 StatusCodes.Status403Forbidden));
@@ -86,7 +86,7 @@ public class OAuthControllerTests
         var auth = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
 
-        auth.Setup(x => x.HandleGoogleCallback())
+        auth.Setup(x => x.HandleGoogleCallback(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<LoginResponse>.Ok(new LoginResponse
             {
                 Jwt = "jwt-token",
@@ -106,7 +106,7 @@ public class OAuthControllerTests
         var auth = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
 
-        auth.Setup(x => x.HandleGitHubCallback())
+        auth.Setup(x => x.HandleGitHubCallback(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<LoginResponse>.Fail("ошибка"));
 
         var controller = new OAuthController(auth.Object, loger.Object);
@@ -121,7 +121,7 @@ public class OAuthControllerTests
         var auth = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
 
-        auth.Setup(x => x.HandleGitHubCallback())
+        auth.Setup(x => x.HandleGitHubCallback(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<LoginResponse>.Fail(
                 "Действие запрещено: ваш аккаунт заблокирован.",
                 StatusCodes.Status403Forbidden));
@@ -139,7 +139,7 @@ public class OAuthControllerTests
         var auth = new Mock<IOAuthService>();
         var loger = new Mock<ILogger<OAuthController>>();
 
-        auth.Setup(x => x.HandleGitHubCallback())
+        auth.Setup(x => x.HandleGitHubCallback(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult<LoginResponse>.Ok(new LoginResponse
             {
                 Jwt = "jwt-token",

@@ -18,7 +18,8 @@ public  class ActiveUserFilter : IAsyncActionFilter
         ActionExecutingContext context,
         ActionExecutionDelegate next)
     {
-        var currentUser = await _currentUserService.GetCurrentUserAsync(context.HttpContext.User);
+        var token =  context.HttpContext.RequestAborted;
+        var currentUser = await _currentUserService.GetCurrentUserAsync(context.HttpContext.User,token);
 
         if (!currentUser.Success || currentUser.Data is null)
         {
