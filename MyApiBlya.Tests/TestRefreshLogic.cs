@@ -173,7 +173,7 @@ var auth = new AuthService(
 Assert.False(result.Success);
 Assert.Equal(StatusCodes.Status401Unauthorized,result.StatusCode);
 Assert.Null(result.Data);
-jwt.Verify(x=>x.GenerateUserTokenAsync(It.IsAny<User>()),Times.Never);
+jwt.Verify(x=>x.GenerateUserToken(It.IsAny<User>()),Times.Never);
 refresh.Verify(x=>x.GenerateRefreshToken(),Times.Never);
     }
 
@@ -203,7 +203,7 @@ public async Task RefreshAllTokens_WhenRefreshTokenValid_ReturnsNewTokens()
 
     await context.SaveChangesAsync();
 
-    jwt.Setup(x => x.GenerateUserTokenAsync(It.IsAny<User>()))
+    jwt.Setup(x => x.GenerateUserToken(It.IsAny<User>()))
         .ReturnsAsync("new-jwt-token");
 
     refresh.Setup(x => x.GenerateRefreshToken())
@@ -237,7 +237,7 @@ public async Task RefreshAllTokens_WhenRefreshTokenValid_ReturnsNewTokens()
     Assert.Equal("new-jwt-token", result.Data.Jwt);
     Assert.Equal("new-refresh-token", result.Data.RefreshToken);
 
-    jwt.Verify(x => x.GenerateUserTokenAsync(It.IsAny<User>()), Times.Once);
+    jwt.Verify(x => x.GenerateUserToken(It.IsAny<User>()), Times.Once);
     refresh.Verify(x => x.GenerateRefreshToken(), Times.Once);
 }
 
@@ -267,7 +267,7 @@ public async Task RefreshAllTokens_WhenAdminRefreshTokenValid_ReturnsNewTokens()
 
     await context.SaveChangesAsync();
 
-    jwt.Setup(x => x.GenerateAdminTokenAsync(It.IsAny<User>()))
+    jwt.Setup(x => x.GenerateAdminToken(It.IsAny<User>()))
         .ReturnsAsync("new-admin-jwt-token");
 
     refresh.Setup(x => x.GenerateRefreshToken())
@@ -301,7 +301,7 @@ public async Task RefreshAllTokens_WhenAdminRefreshTokenValid_ReturnsNewTokens()
     Assert.Equal("new-admin-jwt-token", result.Data.Jwt);
     Assert.Equal("new-admin-refresh-token", result.Data.RefreshToken);
 
-    jwt.Verify(x => x.GenerateAdminTokenAsync(It.IsAny<User>()), Times.Once);
+    jwt.Verify(x => x.GenerateAdminToken(It.IsAny<User>()), Times.Once);
     refresh.Verify(x => x.GenerateRefreshToken(), Times.Once);
 }
     

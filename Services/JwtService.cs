@@ -17,7 +17,7 @@ public class JwtService : IJwtTokenService
             ?? throw new InvalidOperationException("Jwt:Key не настроен.");
     }
 
-    public  Task<string> GenerateUserTokenAsync(User user)
+    public  Task<string> GenerateUserToken(User user)
     {
             var claims= new List<Claim> //claims создают в токене подтверждение данных о пользователя
             {
@@ -46,7 +46,7 @@ return Task.FromResult(handler);
       
     
 
-    public  Task<string> GenerateAdminTokenAsync(User user)
+    public  Task<string> GenerateAdminToken(User user)
     {
             var claims= new List<Claim> //claims создают в токене подтверждение данных о пользователя
             {
@@ -72,5 +72,4 @@ return  Task.FromResult(handler);
 
     } 
 }
-
 

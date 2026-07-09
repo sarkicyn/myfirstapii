@@ -37,8 +37,8 @@ public interface IPasswordHashService
 }
 public interface IJwtTokenService
 {
-    Task<string> GenerateUserTokenAsync(User user);
-      Task<string> GenerateAdminTokenAsync(User user);
+    Task<string> GenerateUserToken(User user);
+      Task<string> GenerateAdminToken(User user);
 }
 public interface IUserActionService  
 {

@@ -55,7 +55,7 @@ await _fresh.SaveRefreshTokenAsync(result,hash,Token);
         
 
         result.RefreshTokenHash = hash;
-      var jwt = await _jwt.GenerateUserTokenAsync(result);
+      var jwt = await _jwt.GenerateUserToken(result);
         await _context.SaveChangesAsync(Token);
         RemoveUserCache(result.Id);
 await _action.AddActionAsync(result, "вход через google",Token);
@@ -84,7 +84,7 @@ await _fresh.SaveRefreshTokenAsync(result,hash,token);
         
         
 
-      var jwt = await _jwt.GenerateUserTokenAsync(result);
+      var jwt = await _jwt.GenerateUserToken(result);
         await _context.SaveChangesAsync(token);
         RemoveUserCache(result.Id);
 await _action.AddActionAsync(result, "вход через github",token);
@@ -96,6 +96,5 @@ await _httpContextAccessor.HttpContext!.SignOutAsync("sexScheme");
 
 }
 }
-
 
 

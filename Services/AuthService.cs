@@ -76,7 +76,7 @@ if (us.IsBlocked)
 await _fresh.SaveRefreshTokenAsync(us,hash,token);
         await _context.SaveChangesAsync(token);
 
-      var jwt = await _jwt.GenerateUserTokenAsync(us);
+      var jwt = await _jwt.GenerateUserToken(us);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
         await _action.AddActionAsync(us, "вход пользователя",token);
@@ -131,7 +131,7 @@ await _fresh.SaveRefreshTokenAsync(us,hash,token);
         await _context.Users.AddAsync(us,token);
         await _context.SaveChangesAsync(token);
 
-      var jwt = await _jwt.GenerateUserTokenAsync(us);
+      var jwt = await _jwt.GenerateUserToken(us);
         await _context.SaveChangesAsync();
         RemoveUserCache(us.Id);
         await _action.AddActionAsync(us, "регистрация пользователя",token);
@@ -172,7 +172,7 @@ if (userTrue.RefreshTokenExpiresAt <= DateTime.UtcNow)
     
     
 }if(userTrue.Role=="Admin"){
-var jwtAdmin  = await _jwt.GenerateAdminTokenAsync(userTrue);
+var jwtAdmin  = await _jwt.GenerateAdminToken(userTrue);
 var (Refresh,Hash)  = _fresh.GenerateRefreshToken();
 await _fresh.SaveRefreshTokenAsync(userTrue,Hash,Token); 
 await _action.AddActionAsync(userTrue, "обновление  токенов",Token);
@@ -182,7 +182,7 @@ return ServiceResult<LoginResponse>.Ok(new LoginResponse
     RefreshToken = Refresh
 });}
 
-var jwt  = await _jwt.GenerateUserTokenAsync(userTrue);
+var jwt  = await _jwt.GenerateUserToken(userTrue);
 var (refresh,hash) = _fresh.GenerateRefreshToken();
  await _fresh.SaveRefreshTokenAsync(userTrue,hash,Token);
 await _action.AddActionAsync(userTrue, "обновление токенов",Token);
@@ -228,7 +228,7 @@ if (string.IsNullOrWhiteSpace(adminLogin) ||
              var(refreshToken,hash) =  _fresh.GenerateRefreshToken();
              await _fresh.SaveRefreshTokenAsync(user,hash,token); 
               await _context.SaveChangesAsync(token);
-              var jwt = await _jwt.GenerateAdminTokenAsync(user);
+              var jwt = await _jwt.GenerateAdminToken(user);
               await _action.AddActionAsync(user, "вход администратора",token);
               RemoveUserCache(user.Id);
               
