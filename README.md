@@ -39,7 +39,7 @@ MyApiBlya — ASP.NET Core Web API для аутентификации и упр
 
 ```text
 .
-|-- Common/                 # ServiceResult, пагинация, ключи кэша и общие сообщения
+|-- helpers/                 # ServiceResult, пагинация, ключи кэша и общие сообщения
 |-- Controllers/            # HTTP-контроллеры API
 |-- Data/                   # AppDbContext
 |-- DTOs/                   # модели запросов, ответов и настройки SMTP
