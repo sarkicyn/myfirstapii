@@ -17,7 +17,7 @@ public class JwtService : IJwtTokenService
             ?? throw new InvalidOperationException("Jwt:Key не настроен.");
     }
 
-    public  Task<string> GenerateUserToken(User user)
+    public  ValueTask<string> GenerateUserToken(User user)
     {
             var claims= new List<Claim> //claims создают в токене подтверждение данных о пользователя
             {
@@ -40,13 +40,13 @@ var token = new JwtSecurityToken( /// объект токена,его соде�
     signingCredentials: creditinals
 );
 var handler = new JwtSecurityTokenHandler().WriteToken(token); ///через конструктор создаем объект-обработчик токена и вызываем метод,превращающий токен в строку для пользователя  
-return Task.FromResult(handler);
+return ValueTask.FromResult(handler);
 
     } 
       
     
 
-    public  Task<string> GenerateAdminToken(User user)
+    public  ValueTask<string> GenerateAdminToken(User user)
     {
             var claims= new List<Claim> //claims создают в токене подтверждение данных о пользователя
             {
@@ -68,7 +68,7 @@ var token = new JwtSecurityToken( /// объект токена,его соде�
     signingCredentials: creditinals
 );
 var handler = new JwtSecurityTokenHandler().WriteToken(token); ///через конструктор создаем объект-обработчик токена и вызываем метод,превращающий токен в строку для пользователя  
-return  Task.FromResult(handler);
+return  ValueTask.FromResult(handler);
 
     } 
 }

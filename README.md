@@ -205,17 +205,6 @@ Invoke-WebRequest http://localhost:5063/metrics
 
 Endpoint возвращает текст в формате Prometheus. В нём публикуются метрики ASP.NET Core, HTTP-клиента и .NET runtime. После нескольких запросов к API обновите `/metrics`, чтобы увидеть накопленные HTTP-метрики.
 
-Для сбора Prometheus используйте target:
-
-```yaml
-scrape_configs:
-  - job_name: myapiblya
-    static_configs:
-      - targets: ["host.docker.internal:5063"]
-```
-
-Если Prometheus работает в той же Docker-сети и обращается к сервису по имени Compose, target должен быть `api:5063`.
-
 ### 7. Остановите приложение
 
 Остановить и удалить контейнеры, сохранив данные PostgreSQL:

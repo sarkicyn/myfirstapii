@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyApiBlya.Services;
 using Microsoft.AspNetCore.Http;
-public static class     ServiceResultMapper
+public static class  ServiceResultMapper
 {
     public static IActionResult ToActionResult<T>(ControllerBase controller,ServiceResult<T> result)
     {
