@@ -14,16 +14,16 @@ public  class CorrelationIdMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context)
-    {
-        var correlationId = Guid.NewGuid().ToString();
+        public async Task InvokeAsync(HttpContext context)
+        {
+            var correlationId = Guid.NewGuid().ToString();
 
-        using (_logger.BeginScope(new Dictionary<string, string>
-        {
-            ["CorrelationId"] = correlationId
-        }))
-        {
-            await _next(context);
+            using (_logger.BeginScope(new Dictionary<string, string>
+            {
+                ["CorrelationId"] = correlationId
+            }))
+            {
+                await _next(context);
+            }
         }
-    }
 }
